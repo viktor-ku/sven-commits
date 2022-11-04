@@ -1,20 +1,18 @@
 WHITESPACE = { " " }
 
-Commit = ${
+Lines = ${
   SOI
 
-  ~ Type
-  ~ ": "
-  ~ Desc
+  ~ RowEOL*
+  ~ Row
 
   ~ EOI
 }
 
-Type = @{
-  (!":" ~ ANY)*
+RowEOL = @{
+  (Row ~ NEWLINE)
 }
 
-Desc = {
-  ANY*
-  ~ (EOI | "\n")
+Row = @{
+  (!NEWLINE ~ ANY)*
 }
