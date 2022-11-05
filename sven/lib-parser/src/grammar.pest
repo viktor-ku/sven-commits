@@ -56,3 +56,10 @@ ScopeContainer = _{
 Scope = {
   (!")" ~ ANY)+
 }
+
+// Probe
+// ...
+
+Probe = _{ ProbeEOL | ProbeChar }
+ProbeEOL = { NEWLINE }
+ProbeChar = { ANY }

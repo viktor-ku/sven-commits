@@ -39,6 +39,29 @@ struct Row<'row> {
     pub start: usize,
     pub end: usize,
     pub value: &'row str,
+
+    /// 0 for new line,
+    /// 1 for any other character
+    pub first: u8,
+}
+
+fn probe(value: &str) -> u8 {
+    match CommitParser::parse(Rule::Probe, value) {
+        Ok(rules) => {
+            for rule in rules {
+                match rule.as_rule() {
+                    Rule::ProbeEOL => return 0,
+                    Rule::ProbeChar => return 1,
+                    _ => unreachable!(),
+                };
+            }
+        }
+        Err(e) => {
+            panic!("{}", e);
+        }
+    };
+
+    unreachable!()
 }
 
 pub fn commit_parser(commit: &str) -> Result<()> {
@@ -59,6 +82,7 @@ pub fn commit_parser(commit: &str) -> Result<()> {
                                         start: span.start(),
                                         end: span.end(),
                                         value,
+                                        first: probe(value),
                                     });
                                 }
                                 _ => {}
