@@ -1,4 +1,13 @@
+// General
+// ...
+
 WHITESPACE = { " " }
+
+MustWhitespace = { " " }
+MustSemicolon = { ":" }
+
+// Parsing rows one by one
+// ...
 
 Lines = ${
   SOI
@@ -15,4 +24,35 @@ RowEOL = @{
 
 Row = @{
   (!NEWLINE ~ ANY)*
+}
+
+// Header
+// ...
+
+Header = ${
+  Type
+  ~ ScopeContainer?
+  ~ BreakingChange?
+  ~ MustSemicolon
+  ~ MustWhitespace
+  ~ ShortDesc
+}
+
+ShortDesc = {
+  (!NEWLINE ~ ANY)*
+}
+Type = {
+  (!(":" | " " | "(") ~ ANY)*
+}
+BreakingChange = {
+  "!"
+}
+
+ScopeContainer = _{
+  "("
+  ~ Scope
+  ~ ")"
+}
+Scope = {
+  (!")" ~ ANY)+
 }

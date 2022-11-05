@@ -34,22 +34,49 @@ pub struct WeakCommit {
     pub tokens: Vec<CommitToken>,
 }
 
-pub fn commit_parser(commit: &str) -> Result<WeakCommit> {
-    let mut res = WeakCommit {
-        tokens: vec![CommitToken::Start(Pos(1, 0))],
-    };
+#[derive(Debug)]
+struct Row<'row> {
+    pub start: usize,
+    pub end: usize,
+    pub value: &'row str,
+}
+
+pub fn commit_parser(commit: &str) -> Result<()> {
+    let mut rows: Vec<Row> = Vec::new();
 
     match CommitParser::parse(Rule::Lines, commit) {
         Ok(rules) => {
-            println!("{:#?}", rules);
+            // println!("{:#?}", rules);
+            for rule in rules {
+                match rule.as_rule() {
+                    Rule::Lines => {
+                        for rule in rule.into_inner() {
+                            match rule.as_rule() {
+                                Rule::Row | Rule::RowEOL => {
+                                    let span = rule.as_span();
+                                    let value = rule.as_str();
+                                    rows.push(Row {
+                                        start: span.start(),
+                                        end: span.end(),
+                                        value,
+                                    });
+                                }
+                                _ => {}
+                            }
+                        }
+                    }
+                    _ => {}
+                }
+            }
         }
-        Err(e) =>  {
-            panic!("{e:}");
+        Err(e) => {
+            panic!("{}", e);
         }
     }
 
+    println!("rows {:#?}", rows);
 
-    Ok(res)
+    Ok(())
 }
 
 #[cfg(test)]
@@ -60,6 +87,7 @@ mod commits {
     #[test]
     fn must_start_with_a_type() {
         let res = commit_parser("один\nдва\n\n\n\nтри").unwrap();
+        let res = commit_parser("fix(app)!: me").unwrap();
         println!("{:#?}", res);
         assert_eq!(1, 2);
     }
