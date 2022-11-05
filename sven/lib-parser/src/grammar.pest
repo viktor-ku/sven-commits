@@ -60,6 +60,6 @@ Scope = {
 // Probe
 // ...
 
-Probe = _{ ProbeEOL | ProbeChar }
+ProbeBlankLine = _{ ProbeEOL | ProbeChar }
 ProbeEOL = { NEWLINE }
 ProbeChar = { ANY }
