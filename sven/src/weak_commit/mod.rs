@@ -1,11 +1,8 @@
 use anyhow::Result;
 use pest::Parser;
 
-#[macro_use]
-extern crate pest_derive;
-
 #[derive(Parser)]
-#[grammar = "grammar.pest"] // relative to src
+#[grammar = "./weak_commit/grammar.pest"] // relative to src
 struct CommitParser;
 
 #[derive(Debug, PartialEq)]
@@ -93,12 +90,12 @@ impl<'row> Row<'row> {
 }
 
 #[cfg(test)]
-mod commits {
+mod producing {
     use super::*;
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn it_works() {
+    fn singleline() {
         let actual = WeakCommit::parse("fix(app)!: me").unwrap();
         let expected = WeakCommit {
             rows: vec![Row {

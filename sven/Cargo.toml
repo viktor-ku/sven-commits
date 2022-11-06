@@ -1,5 +1,12 @@
-[workspace]
+[package]
+name = "sven"
+version = "0.1.0"
+edition = "2021"
 
-members = [
-  "lib-parser",
-]
+[dependencies]
+pest = "2.4.*"
+pest_derive = "2.4.*"
+anyhow = "1.0.*"
+
+[dev-dependencies]
+pretty_assertions = "1.3.*"
