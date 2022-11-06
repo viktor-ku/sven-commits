@@ -8,63 +8,12 @@ extern crate pest_derive;
 #[grammar = "grammar.pest"] // relative to src
 struct CommitParser;
 
-#[derive(Debug)]
-pub struct CommitLike<'a> {
+#[derive(Debug, PartialEq)]
+pub struct WeakCommit<'a> {
     pub rows: Vec<Row<'a>>,
 }
 
-impl<'a> CommitLike<'a> {
-    /// Parser takes an arbitrary utf8 compatible string and
-    /// returns some rows (being `Vec<Row>`), amongst other meta data
-    /// trying to describe the contents of the string.
-    ///
-    /// Each `Row` corresponds to a new line, even when it's a blank line,
-    /// of some text. It's up to the user of this parser to decide how
-    /// to interpret these rows. Sensible example of it would be to try
-    /// and assume that the first row should be the header of the commit.
-    ///
-    /// This function does not perform any kind of checks and does not assume
-    /// anything about the specification itself, rather, it finds all the rows
-    /// and fills up the data in a most convenient way, e.g. counts the number
-    /// of rows, probes for the blank lines, gives a way to inspect the shape,
-    /// etc.
-    ///
-    /// ## `blank` field
-    ///
-    /// Each `Row` has a `blank` field, which indicates whether it's a blank
-    /// line (such line consists only out of the new line) or not.
-    ///
-    /// If you map all rows in a way that takes only `blank` fields,
-    /// a typical commit message might look like this:
-    /// > `0 1 0 0 0 1 0 0 0 1 0 0 0`
-    /// - a header
-    /// - two paragraphs of text
-    /// - and a three footers
-    ///
-    /// ...or just this
-    /// > `0`
-    /// which is the most common - being just the header.
-    ///
-    /// > 6. ...The body MUST begin one blank line after the description.
-    /// So we actually expect the second element (if there more than two elements)
-    /// to be 0.
-    ///
-    /// Seems like we never expect two or more consecutive 0's as it would
-    /// idicate two or more balnk lines just being there.
-    ///
-    /// > 7. A commit body is free-form and MAY consist of any number of
-    /// > newline separated paragraphs.
-    ///
-    /// Having said that, if we are able to get to the number 2 by summing
-    /// up all the "blank" fields from the rows vector, resetting the value to
-    /// 1 every time then we found an issue (too many pointless blank lines)
-    ///
-    /// Checking the footer also becomes a trivial task: travel from the end of the
-    /// rows looking for the first 1, after which consider footers to be over.
-    ///
-    /// Assume everything from the end first "1" after the footers going backwards
-    /// as well as everything from the first "1" after the header to be the "body"
-    /// when verifying the commit structure.
+impl<'a> WeakCommit<'a> {
     pub fn parse(commit: &'a str) -> Result<Self> {
         let mut rows: Vec<Row> = Vec::new();
         let mut row_n: usize = 1;
@@ -100,11 +49,11 @@ impl<'a> CommitLike<'a> {
             }
         }
 
-        Ok(CommitLike { rows })
+        Ok(Self { rows })
     }
 }
 
-#[derive(Debug)]
+#[derive(Debug, PartialEq)]
 pub struct Row<'row> {
     /// Consists of two integers indicating the start byte index
     /// of the row and the end byte index of the row from the start of the
@@ -149,11 +98,78 @@ mod commits {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn must_start_with_a_type() {
-        let res = CommitLike::parse("один\nдва\n\n\n\nтри").unwrap();
-        println!("{:#?}", res);
-        let res = CommitLike::parse("fix(app)!: me").unwrap();
-        println!("{:#?}", res);
-        assert_eq!(1, 2);
+    fn it_works() {
+        let actual = WeakCommit::parse("fix(app)!: me").unwrap();
+        let expected = WeakCommit {
+            rows: vec![Row {
+                range_bytes: (0, 13),
+                row: 1,
+                value: "fix(app)!: me",
+                blank: 0,
+            }],
+        };
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn multiline() {
+        let actual = WeakCommit::parse("one\n\ntwo\n\nthree").unwrap();
+        let expected = WeakCommit {
+            rows: vec![
+                Row {
+                    range_bytes: (0, 4),
+                    row: 1,
+                    value: "one\n",
+                    blank: 0,
+                },
+                Row {
+                    range_bytes: (4, 5),
+                    row: 2,
+                    value: "\n",
+                    blank: 1,
+                },
+                Row {
+                    range_bytes: (5, 9),
+                    row: 3,
+                    value: "two\n",
+                    blank: 0,
+                },
+                Row {
+                    range_bytes: (9, 10),
+                    row: 4,
+                    value: "\n",
+                    blank: 1,
+                },
+                Row {
+                    range_bytes: (10, 15),
+                    row: 5,
+                    value: "three",
+                    blank: 0,
+                },
+            ],
+        };
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn multiline_utf8() {
+        let actual = WeakCommit::parse("раз\nдва").unwrap();
+        let expected = WeakCommit {
+            rows: vec![
+                Row {
+                    range_bytes: (0, 7),
+                    row: 1,
+                    value: "раз\n",
+                    blank: 0,
+                },
+                Row {
+                    range_bytes: (7, 13),
+                    row: 2,
+                    value: "два",
+                    blank: 0,
+                },
+            ],
+        };
+        assert_eq!(actual, expected);
     }
 }
