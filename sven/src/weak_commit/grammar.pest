@@ -30,15 +30,15 @@ Row = @{
 // ...
 
 Header = ${
-  Type
+  (Type
   ~ ScopeContainer?
   ~ BreakingChange?
   ~ MustSemicolon
-  ~ MustWhitespace
-  ~ ShortDesc
+  ~ MustWhitespace)?
+  ~ Desc
 }
 
-ShortDesc = {
+Desc = {
   (!NEWLINE ~ ANY)*
 }
 Type = {

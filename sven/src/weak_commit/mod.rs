@@ -10,7 +10,45 @@ pub struct WeakCommit<'a> {
     pub rows: Vec<Row<'a>>,
 }
 
+#[derive(Debug, PartialEq, Default)]
+pub struct WeakCommitHeader<'c> {
+    pub kind: Option<&'c str>,
+    pub desc: &'c str,
+}
+
 impl<'a> WeakCommit<'a> {
+    pub fn parse_header(&self) -> Result<WeakCommitHeader> {
+        let mut header = WeakCommitHeader::default();
+
+        match CommitParser::parse(Rule::Header, self.rows[0].value) {
+            Ok(rules) => {
+                for rule in rules {
+                    match rule.as_rule() {
+                        Rule::Header => {
+                            for rule in rule.into_inner() {
+                                match rule.as_rule() {
+                                    Rule::Type => {
+                                        header.kind = Some(rule.as_str());
+                                    }
+                                    Rule::Desc => {
+                                        header.desc = rule.as_str();
+                                    }
+                                    _ => {}
+                                }
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            Err(e) => {
+                panic!("{}", e);
+            }
+        }
+
+        Ok(header)
+    }
+
     pub fn parse(commit: &'a str) -> Result<Self> {
         let mut rows: Vec<Row> = Vec::new();
         let mut row_n: usize = 1;

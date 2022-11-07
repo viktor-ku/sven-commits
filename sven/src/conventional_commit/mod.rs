@@ -1,6 +1,9 @@
 use crate::weak_commit::WeakCommit;
 use std::fmt::Display;
 
+mod issue;
+pub use issue::{Issue, TypeIssue};
+
 /// [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/)
 ///
 /// Once this struct has been obtained, it might be safely assumed to have a
@@ -30,13 +33,16 @@ pub struct ConventionalCommit<'c> {
 
 impl<'c> ConventionalCommit<'c> {
     pub fn find_issues(weak_commit: WeakCommit) -> Vec<Issue> {
-        Vec::new()
-    }
-}
+        let mut v = Vec::new();
 
-#[derive(Debug, PartialEq)]
-pub enum Issue {
-    // ...
+        let weak_header = weak_commit.parse_header().unwrap();
+
+        if weak_header.kind.is_none() {
+            v.push(Issue::Type(TypeIssue::NotFound));
+        }
+
+        v
+    }
 }
 
 #[derive(Debug)]
@@ -125,13 +131,13 @@ BREAKING CHANGE: supports many footers
     }
 
     #[test]
-    fn it_works() {
+    fn type_not_found() {
         let commit = r###"
 imagine nothing
 "###
         .trim_start();
         let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap());
-        let expected = Vec::new();
+        let expected = vec![Issue::Type(TypeIssue::NotFound)];
         assert_eq!(actual, expected);
     }
 }
