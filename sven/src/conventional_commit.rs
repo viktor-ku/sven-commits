@@ -16,12 +16,10 @@ use std::fmt::Display;
 #[derive(Debug)]
 pub struct ConventionalCommit<'c> {
     pub header: CommitHeader<'c>,
-    /// There is no particular use of the body defined in the specification,
-    /// so our approach is to just store the entire bytes of the body starting
-    /// from the first unicode symbol of the 3rd line (1st line for the header,
-    /// second line is always just EOL), ending with the last unicode symbol of the
-    /// last line of the body paragraph.
-    pub body: &'c [u8],
+    /// If there is any body (get it?) it should start with the first utf8
+    /// char of the 3rd line (1st for the header, 2nd is just EOL) and end
+    /// with the last char of the last paragraph (char before EOL or EOI)
+    pub body: Option<&'c str>,
     pub footers: &'c [CommitFooter<'c>],
 }
 
@@ -72,11 +70,7 @@ impl Display for ConventionalCommit<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}\n", self.header)?;
 
-        if !self.body.is_empty() {
-            // SAFETY
-            // should never fail, because the only way for bytes to end up
-            // in here is to come from a valid utf8 source like an actual commit
-            let body = unsafe { std::str::from_utf8_unchecked(self.body) };
+        if let Some(body) = self.body {
             write!(f, "\n{}\n", body)?;
         }
 
@@ -105,7 +99,7 @@ mod commit {
                 desc: "a simple fix",
                 breaking_change: false,
             },
-            body: &[],
+            body: None,
             footers: &[],
         };
         let expected = r###"
@@ -117,7 +111,6 @@ fix: a simple fix
 
     #[test]
     fn display_header_body() {
-        let body = String::from("Very simple commit body message");
         let actual = ConventionalCommit {
             header: CommitHeader {
                 kind: "fix",
@@ -125,7 +118,7 @@ fix: a simple fix
                 desc: "a simple fix",
                 breaking_change: false,
             },
-            body: &body.as_bytes(),
+            body: Some("Very simple commit body message"),
             footers: &[],
         };
         let expected = r###"
@@ -139,7 +132,6 @@ Very simple commit body message
 
     #[test]
     fn display_header_body_footer() {
-        let body = String::from("Very simple commit body message");
         let actual = ConventionalCommit {
             header: CommitHeader {
                 kind: "fix",
@@ -147,7 +139,7 @@ Very simple commit body message
                 desc: "a simple fix",
                 breaking_change: false,
             },
-            body: &body.as_bytes(),
+            body: Some("Very simple commit body message"),
             footers: &[CommitFooter::Simple("Refs", "#1001")],
         };
         let expected = r###"
@@ -170,7 +162,7 @@ Refs: #1001
                 desc: "a simple fix",
                 breaking_change: false,
             },
-            body: &[],
+            body: None,
             footers: &[CommitFooter::Simple("Refs", "#1001")],
         };
         let expected = r###"
@@ -191,7 +183,7 @@ Refs: #1001
                 desc: "a simple fix",
                 breaking_change: false,
             },
-            body: &[],
+            body: None,
             footers: &[
                 CommitFooter::Simple("Refs", "#1001"),
                 CommitFooter::BreakingChange("supports many footers"),
@@ -209,7 +201,6 @@ BREAKING CHANGE: supports many footers
 
     #[test]
     fn display_header_many_body_many_footer() {
-        let body = String::from("Раз два три\n\nThis test proves utf8 works");
         let actual = ConventionalCommit {
             header: CommitHeader {
                 kind: "fix",
@@ -217,7 +208,7 @@ BREAKING CHANGE: supports many footers
                 desc: "a simple fix",
                 breaking_change: false,
             },
-            body: &body.as_bytes(),
+            body: Some("Раз два три\n\nThis test proves utf8 works"),
             footers: &[
                 CommitFooter::Simple("Refs", "#1001"),
                 CommitFooter::BreakingChange("supports many footers"),
