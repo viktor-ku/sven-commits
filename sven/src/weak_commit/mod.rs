@@ -25,13 +25,15 @@ impl<'a> WeakCommit<'a> {
                                     Rule::Row | Rule::RowEOL => {
                                         let span = rule.as_span();
                                         let value = rule.as_str();
-                                        rows.push(Row {
-                                            value,
-                                            row: row_n,
-                                            range_bytes: (span.start(), span.end()),
-                                            blank: Row::probe_blank_line(value),
-                                        });
-                                        row_n += 1;
+                                        if !value.is_empty() {
+                                            rows.push(Row {
+                                                value,
+                                                row: row_n,
+                                                range_bytes: (span.start(), span.end()),
+                                                blank: Row::probe_blank_line(value),
+                                            });
+                                            row_n += 1;
+                                        }
                                     }
                                     _ => {}
                                 }

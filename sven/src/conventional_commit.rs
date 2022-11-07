@@ -1,3 +1,4 @@
+use crate::weak_commit::WeakCommit;
 use std::fmt::Display;
 
 /// [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/)
@@ -25,6 +26,17 @@ pub struct ConventionalCommit<'c> {
     /// with the last char of the last paragraph (char before EOL or EOI)
     pub body: Option<&'c str>,
     pub footers: &'c [CommitFooter<'c>],
+}
+
+impl<'c> ConventionalCommit<'c> {
+    pub fn find_issues(weak_commit: WeakCommit) -> Vec<Issue> {
+        Vec::new()
+    }
+}
+
+#[derive(Debug, PartialEq)]
+pub enum Issue {
+    // ...
 }
 
 #[derive(Debug)]
@@ -90,7 +102,42 @@ impl Display for ConventionalCommit<'_> {
 }
 
 #[cfg(test)]
-mod commit {
+mod find_issues {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn no_issues() {
+        let commit = r###"
+fix(refs)!: a simple fix
+
+Раз два три
+
+This test proves utf8 works
+
+Refs: #1001
+BREAKING CHANGE: supports many footers
+"###
+        .trim_start();
+        let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap());
+        let expected = Vec::new();
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn it_works() {
+        let commit = r###"
+imagine nothing
+"###
+        .trim_start();
+        let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap());
+        let expected = Vec::new();
+        assert_eq!(actual, expected);
+    }
+}
+
+#[cfg(test)]
+mod display {
     use super::*;
     use pretty_assertions::assert_eq;
 
