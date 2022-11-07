@@ -13,6 +13,10 @@ use std::fmt::Display;
 /// There is no direct relation with the original commit message.
 /// That is, it might have been modified to fit (e.g. mapped set of unicode
 /// symbols to specific keywords within the spec), or used as is.
+///
+/// Every text (a str really) contained in this struct is expected to be trimmed
+/// down because when `Display`'ing this struct it will format data in the
+/// expected for the specification way.
 #[derive(Debug)]
 pub struct ConventionalCommit<'c> {
     pub header: CommitHeader<'c>,
@@ -204,9 +208,9 @@ BREAKING CHANGE: supports many footers
         let actual = ConventionalCommit {
             header: CommitHeader {
                 kind: "fix",
-                scope: None,
+                scope: Some("refs"),
                 desc: "a simple fix",
-                breaking_change: false,
+                breaking_change: true,
             },
             body: Some("Раз два три\n\nThis test proves utf8 works"),
             footers: &[
@@ -215,7 +219,7 @@ BREAKING CHANGE: supports many footers
             ],
         };
         let expected = r###"
-fix: a simple fix
+fix(refs)!: a simple fix
 
 Раз два три
 
