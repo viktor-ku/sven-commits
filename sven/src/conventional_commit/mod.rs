@@ -140,6 +140,17 @@ imagine nothing
         let expected = vec![Issue::Type(TypeIssue::NotFound)];
         assert_eq!(actual, expected);
     }
+
+    #[test]
+    fn type_not_found_only_colon() {
+        let commit = r###"
+:imagine
+"###
+        .trim_start();
+        let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap());
+        let expected = vec![Issue::Type(TypeIssue::NotFound)];
+        assert_eq!(actual, expected);
+    }
 }
 
 #[cfg(test)]
