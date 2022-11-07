@@ -43,10 +43,10 @@ impl Display for CommitFooter<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CommitFooter::Simple(k, v) => {
-                write!(f, "{}: {}", k, v)
+                write!(f, "{}: {}", k.trim(), v.trim())
             }
             CommitFooter::BreakingChange(v) => {
-                write!(f, "BREAKING CHANGE: {}", v)
+                write!(f, "BREAKING CHANGE: {}", v.trim())
             }
         }
     }
@@ -54,7 +54,7 @@ impl Display for CommitFooter<'_> {
 
 impl Display for CommitHeader<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.kind)?;
+        write!(f, "{}", self.kind.trim())?;
 
         if let Some(scope) = self.scope {
             write!(f, "({})", scope)?;
@@ -64,7 +64,207 @@ impl Display for CommitHeader<'_> {
             write!(f, "!")?;
         }
 
-        write!(f, ": {}", self.desc)
+        write!(f, ": {}", self.desc.trim())
+    }
+}
+
+impl Display for ConventionalCommit<'_> {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}\n", self.header)?;
+
+        if !self.body.is_empty() {
+            // SAFETY
+            // should never fail, because the only way for bytes to end up
+            // in here is to come from a valid utf8 source like an actual commit
+            let body = unsafe { std::str::from_utf8_unchecked(self.body) }.trim();
+            write!(f, "\n{}\n", body)?;
+        }
+
+        if !self.footers.is_empty() {
+            write!(f, "\n")?;
+            for footer in self.footers {
+                write!(f, "{}\n", footer)?;
+            }
+        }
+
+        Ok(())
+    }
+}
+
+#[cfg(test)]
+mod commit {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn display_header() {
+        let actual = ConventionalCommit {
+            header: CommitHeader {
+                kind: "fix",
+                scope: None,
+                desc: "a simple fix",
+                breaking_change: false,
+            },
+            body: &[],
+            footers: &[],
+        };
+        let expected = r###"
+fix: a simple fix
+"###
+        .trim_start();
+        assert_eq!(format!("{}", actual), expected);
+    }
+
+    #[test]
+    fn display_header_body() {
+        let body = String::from("Very simple commit body message");
+        let actual = ConventionalCommit {
+            header: CommitHeader {
+                kind: "fix",
+                scope: None,
+                desc: "a simple fix",
+                breaking_change: false,
+            },
+            body: &body.as_bytes(),
+            footers: &[],
+        };
+        let expected = r###"
+fix: a simple fix
+
+Very simple commit body message
+"###
+        .trim_start();
+        assert_eq!(format!("{}", actual), expected);
+    }
+
+    #[test]
+    fn display_header_body_footer() {
+        let body = String::from("Very simple commit body message");
+        let actual = ConventionalCommit {
+            header: CommitHeader {
+                kind: "fix",
+                scope: None,
+                desc: "a simple fix",
+                breaking_change: false,
+            },
+            body: &body.as_bytes(),
+            footers: &[CommitFooter::Simple("Refs", "#1001")],
+        };
+        let expected = r###"
+fix: a simple fix
+
+Very simple commit body message
+
+Refs: #1001
+"###
+        .trim_start();
+        assert_eq!(format!("{}", actual), expected);
+    }
+
+    #[test]
+    fn display_header_footer() {
+        let actual = ConventionalCommit {
+            header: CommitHeader {
+                kind: "fix",
+                scope: None,
+                desc: "a simple fix",
+                breaking_change: false,
+            },
+            body: &[],
+            footers: &[CommitFooter::Simple("Refs", "#1001")],
+        };
+        let expected = r###"
+fix: a simple fix
+
+Refs: #1001
+"###
+        .trim_start();
+        assert_eq!(format!("{}", actual), expected);
+    }
+
+    #[test]
+    fn display_header_many_footer() {
+        let actual = ConventionalCommit {
+            header: CommitHeader {
+                kind: "fix",
+                scope: None,
+                desc: "a simple fix",
+                breaking_change: false,
+            },
+            body: &[],
+            footers: &[
+                CommitFooter::Simple("Refs", "#1001"),
+                CommitFooter::BreakingChange("supports many footers"),
+            ],
+        };
+        let expected = r###"
+fix: a simple fix
+
+Refs: #1001
+BREAKING CHANGE: supports many footers
+"###
+        .trim_start();
+        assert_eq!(format!("{}", actual), expected);
+    }
+
+    #[test]
+    fn display_header_many_body_many_footer() {
+        let body = String::from("Раз два три\n\nThis test proves utf8 works");
+        let actual = ConventionalCommit {
+            header: CommitHeader {
+                kind: "fix",
+                scope: None,
+                desc: "a simple fix",
+                breaking_change: false,
+            },
+            body: &body.as_bytes(),
+            footers: &[
+                CommitFooter::Simple("Refs", "#1001"),
+                CommitFooter::BreakingChange("supports many footers"),
+            ],
+        };
+        let expected = r###"
+fix: a simple fix
+
+Раз два три
+
+This test proves utf8 works
+
+Refs: #1001
+BREAKING CHANGE: supports many footers
+"###
+        .trim_start();
+        assert_eq!(format!("{}", actual), expected);
+    }
+
+    #[test]
+    fn display_header_many_body_many_footer_trim() {
+        let body = String::from("Раз два три\n\nThis test proves utf8 works\n\n\n\n");
+        let actual = ConventionalCommit {
+            header: CommitHeader {
+                kind: "fix",
+                scope: None,
+                desc: "a simple fix\n\n",
+                breaking_change: false,
+            },
+            body: &body.as_bytes(),
+            footers: &[
+                CommitFooter::Simple("Refs", "#1001\n\n"),
+                CommitFooter::BreakingChange("supports many footers\n\n"),
+            ],
+        };
+        let expected = r###"
+fix: a simple fix
+
+Раз два три
+
+This test proves utf8 works
+
+Refs: #1001
+BREAKING CHANGE: supports many footers
+"###
+        .trim_start();
+        assert_eq!(format!("{}", actual), expected);
     }
 }
 
