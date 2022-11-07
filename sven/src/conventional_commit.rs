@@ -43,10 +43,10 @@ impl Display for CommitFooter<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         match self {
             CommitFooter::Simple(k, v) => {
-                write!(f, "{}: {}", k.trim(), v.trim())
+                write!(f, "{}: {}", k, v)
             }
             CommitFooter::BreakingChange(v) => {
-                write!(f, "BREAKING CHANGE: {}", v.trim())
+                write!(f, "BREAKING CHANGE: {}", v)
             }
         }
     }
@@ -54,7 +54,7 @@ impl Display for CommitFooter<'_> {
 
 impl Display for CommitHeader<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.kind.trim())?;
+        write!(f, "{}", self.kind)?;
 
         if let Some(scope) = self.scope {
             write!(f, "({})", scope)?;
@@ -64,7 +64,7 @@ impl Display for CommitHeader<'_> {
             write!(f, "!")?;
         }
 
-        write!(f, ": {}", self.desc.trim())
+        write!(f, ": {}", self.desc)
     }
 }
 
@@ -76,7 +76,7 @@ impl Display for ConventionalCommit<'_> {
             // SAFETY
             // should never fail, because the only way for bytes to end up
             // in here is to come from a valid utf8 source like an actual commit
-            let body = unsafe { std::str::from_utf8_unchecked(self.body) }.trim();
+            let body = unsafe { std::str::from_utf8_unchecked(self.body) };
             write!(f, "\n{}\n", body)?;
         }
 
@@ -221,36 +221,6 @@ BREAKING CHANGE: supports many footers
             footers: &[
                 CommitFooter::Simple("Refs", "#1001"),
                 CommitFooter::BreakingChange("supports many footers"),
-            ],
-        };
-        let expected = r###"
-fix: a simple fix
-
-Раз два три
-
-This test proves utf8 works
-
-Refs: #1001
-BREAKING CHANGE: supports many footers
-"###
-        .trim_start();
-        assert_eq!(format!("{}", actual), expected);
-    }
-
-    #[test]
-    fn display_header_many_body_many_footer_trim() {
-        let body = String::from("Раз два три\n\nThis test proves utf8 works\n\n\n\n");
-        let actual = ConventionalCommit {
-            header: CommitHeader {
-                kind: "fix",
-                scope: None,
-                desc: "a simple fix\n\n",
-                breaking_change: false,
-            },
-            body: &body.as_bytes(),
-            footers: &[
-                CommitFooter::Simple("Refs", "#1001\n\n"),
-                CommitFooter::BreakingChange("supports many footers\n\n"),
             ],
         };
         let expected = r###"
