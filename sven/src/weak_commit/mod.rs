@@ -10,28 +10,60 @@ pub struct WeakCommit<'a> {
     pub rows: Vec<Row<'a>>,
 }
 
-#[derive(Debug, PartialEq, Default)]
-pub struct WeakCommitHeader<'c> {
-    pub kind: Option<&'c str>,
-    pub desc: &'c str,
+#[derive(Debug, PartialEq)]
+pub enum Token {
+    Word(String),
+    Whitespace,
+    OpenBracket,
+    CloseBracket,
+    ExclMark,
+    Colon,
+    EOL,
 }
 
 impl<'a> WeakCommit<'a> {
-    pub fn parse_header(&self) -> Result<WeakCommitHeader> {
-        let mut header = WeakCommitHeader::default();
+    pub fn parse_header(&self) -> Result<Vec<Token>> {
+        let mut v = Vec::new();
+        let mut wordbuff = String::new();
 
-        match CommitParser::parse(Rule::Header, self.rows[0].value) {
+        match CommitParser::parse(Rule::Tokens, self.rows[0].value) {
             Ok(rules) => {
                 for rule in rules {
                     match rule.as_rule() {
-                        Rule::Header => {
-                            for rule in rule.into_inner() {
-                                match rule.as_rule() {
-                                    Rule::Type => {
-                                        header.kind = Some(rule.as_str());
+                        Rule::Tokens => {
+                            for token in rule.into_inner() {
+                                match token.as_rule() {
+                                    Rule::TokenChar => {
+                                        let one = token.as_str();
+                                        wordbuff.push_str(one);
+                                        continue;
                                     }
-                                    Rule::Desc => {
-                                        header.desc = rule.as_str();
+                                    _ => {
+                                        if !wordbuff.is_empty() {
+                                            v.push(Token::Word(wordbuff.clone()));
+                                            wordbuff.clear();
+                                        }
+                                    }
+                                }
+
+                                match token.as_rule() {
+                                    Rule::TokenOpenBracket => {
+                                        v.push(Token::OpenBracket);
+                                    }
+                                    Rule::TokenCloseBracket => {
+                                        v.push(Token::CloseBracket);
+                                    }
+                                    Rule::TokenExclMark => {
+                                        v.push(Token::ExclMark);
+                                    }
+                                    Rule::TokenColon => {
+                                        v.push(Token::Colon);
+                                    }
+                                    Rule::TokenWhitespace => {
+                                        v.push(Token::Whitespace);
+                                    }
+                                    Rule::TokenEOL => {
+                                        v.push(Token::EOL);
                                     }
                                     _ => {}
                                 }
@@ -46,7 +78,7 @@ impl<'a> WeakCommit<'a> {
             }
         }
 
-        Ok(header)
+        Ok(v)
     }
 
     pub fn parse(commit: &'a str) -> Result<Self> {

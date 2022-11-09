@@ -3,9 +3,6 @@
 
 WHITESPACE = { " " }
 
-MustWhitespace = { " " }
-MustSemicolon = { ":" }
-
 // Parsing rows one by one
 // ...
 
@@ -26,40 +23,31 @@ Row = @{
   (!NEWLINE ~ ANY)*
 }
 
-// Header
-// ...
-
-Header = ${
-  (Type
-  ~ ScopeContainer?
-  ~ BreakingChange?
-  ~ MustSemicolon
-  ~ MustWhitespace)?
-  ~ Desc
-}
-
-Desc = {
-  (!NEWLINE ~ ANY)*
-}
-Type = {
-  (!(":" | " " | "(") ~ ANY)*
-}
-BreakingChange = {
-  "!"
-}
-
-ScopeContainer = _{
-  "("
-  ~ Scope
-  ~ ")"
-}
-Scope = {
-  (!")" ~ ANY)+
-}
-
 // Probe
 // ...
 
 ProbeBlankLine = _{ ProbeEOL | ProbeChar }
 ProbeEOL = { NEWLINE }
 ProbeChar = { ANY }
+
+// Tokens
+// ...
+
+Tokens = ${
+  (
+    TokenWhitespace
+    | TokenExclMark
+    | TokenColon
+    | TokenOpenBracket | TokenCloseBracket
+    | TokenEOL
+    | TokenChar
+  )+
+}
+
+TokenChar = { ANY }
+TokenWhitespace = { " " }
+TokenOpenBracket = { "(" }
+TokenCloseBracket = { ")" }
+TokenExclMark = { "!" }
+TokenColon = { ":" }
+TokenEOL = { NEWLINE }

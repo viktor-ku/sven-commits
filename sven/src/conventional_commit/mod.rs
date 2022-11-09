@@ -35,11 +35,7 @@ impl<'c> ConventionalCommit<'c> {
     pub fn find_issues(weak_commit: WeakCommit) -> Vec<Issue> {
         let mut v = Vec::new();
 
-        let weak_header = weak_commit.parse_header().unwrap();
-
-        if weak_header.kind.is_none() {
-            v.push(Issue::Type(TypeIssue::NotFound));
-        }
+        weak_commit.parse_header();
 
         v
     }
@@ -127,28 +123,6 @@ BREAKING CHANGE: supports many footers
         .trim_start();
         let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap());
         let expected = Vec::new();
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn type_not_found() {
-        let commit = r###"
-imagine nothing
-"###
-        .trim_start();
-        let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap());
-        let expected = vec![Issue::Type(TypeIssue::NotFound)];
-        assert_eq!(actual, expected);
-    }
-
-    #[test]
-    fn type_not_found_only_colon() {
-        let commit = r###"
-:imagine
-"###
-        .trim_start();
-        let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap());
-        let expected = vec![Issue::Type(TypeIssue::NotFound)];
         assert_eq!(actual, expected);
     }
 }
