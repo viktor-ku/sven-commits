@@ -26,55 +26,51 @@ impl<'a> WeakCommit<'a> {
         let mut v = Vec::new();
         let mut wordbuff = String::new();
 
-        match CommitParser::parse(Rule::Tokens, self.rows[0].value) {
-            Ok(rules) => {
-                for rule in rules {
-                    match rule.as_rule() {
-                        Rule::Tokens => {
-                            for token in rule.into_inner() {
-                                match token.as_rule() {
-                                    Rule::TokenChar => {
-                                        let one = token.as_str();
-                                        wordbuff.push_str(one);
-                                        continue;
-                                    }
-                                    _ => {
-                                        if !wordbuff.is_empty() {
-                                            v.push(Token::Word(wordbuff.clone()));
-                                            wordbuff.clear();
-                                        }
-                                    }
-                                }
+        let input = self.rows[0].value;
+        let rules = CommitParser::parse(Rule::Tokens, input)?;
 
-                                match token.as_rule() {
-                                    Rule::TokenOpenBracket => {
-                                        v.push(Token::OpenBracket);
-                                    }
-                                    Rule::TokenCloseBracket => {
-                                        v.push(Token::CloseBracket);
-                                    }
-                                    Rule::TokenExclMark => {
-                                        v.push(Token::ExclMark);
-                                    }
-                                    Rule::TokenColon => {
-                                        v.push(Token::Colon);
-                                    }
-                                    Rule::TokenWhitespace => {
-                                        v.push(Token::Whitespace);
-                                    }
-                                    Rule::TokenEOL => {
-                                        v.push(Token::EOL);
-                                    }
-                                    _ => {}
+        for rule in rules {
+            match rule.as_rule() {
+                Rule::Tokens => {
+                    for token in rule.into_inner() {
+                        match token.as_rule() {
+                            Rule::TokenChar => {
+                                let one = token.as_str();
+                                wordbuff.push_str(one);
+                                continue;
+                            }
+                            _ => {
+                                if !wordbuff.is_empty() {
+                                    v.push(Token::Word(wordbuff.clone()));
+                                    wordbuff.clear();
                                 }
                             }
                         }
-                        _ => {}
+
+                        match token.as_rule() {
+                            Rule::TokenOpenBracket => {
+                                v.push(Token::OpenBracket);
+                            }
+                            Rule::TokenCloseBracket => {
+                                v.push(Token::CloseBracket);
+                            }
+                            Rule::TokenExclMark => {
+                                v.push(Token::ExclMark);
+                            }
+                            Rule::TokenColon => {
+                                v.push(Token::Colon);
+                            }
+                            Rule::TokenWhitespace => {
+                                v.push(Token::Whitespace);
+                            }
+                            Rule::TokenEOL => {
+                                v.push(Token::EOL);
+                            }
+                            _ => {}
+                        }
                     }
                 }
-            }
-            Err(e) => {
-                panic!("{}", e);
+                _ => {}
             }
         }
 
@@ -85,36 +81,31 @@ impl<'a> WeakCommit<'a> {
         let mut rows: Vec<Row> = Vec::new();
         let mut row_n: usize = 1;
 
-        match CommitParser::parse(Rule::Lines, commit) {
-            Ok(rules) => {
-                for rule in rules {
-                    match rule.as_rule() {
-                        Rule::Lines => {
-                            for rule in rule.into_inner() {
-                                match rule.as_rule() {
-                                    Rule::Row | Rule::RowEOL => {
-                                        let span = rule.as_span();
-                                        let value = rule.as_str();
-                                        if !value.is_empty() {
-                                            rows.push(Row {
-                                                value,
-                                                row: row_n,
-                                                range_bytes: (span.start(), span.end()),
-                                                blank: Row::probe_blank_line(value),
-                                            });
-                                            row_n += 1;
-                                        }
-                                    }
-                                    _ => {}
+        let rules = CommitParser::parse(Rule::Lines, commit)?;
+
+        for rule in rules {
+            match rule.as_rule() {
+                Rule::Lines => {
+                    for rule in rule.into_inner() {
+                        match rule.as_rule() {
+                            Rule::Row | Rule::RowEOL => {
+                                let span = rule.as_span();
+                                let value = rule.as_str();
+                                if !value.is_empty() {
+                                    rows.push(Row {
+                                        value,
+                                        row: row_n,
+                                        range_bytes: (span.start(), span.end()),
+                                        blank: Row::probe_blank_line(value),
+                                    });
+                                    row_n += 1;
                                 }
                             }
+                            _ => {}
                         }
-                        _ => {}
                     }
                 }
-            }
-            Err(e) => {
-                panic!("{}", e);
+                _ => {}
             }
         }
 
