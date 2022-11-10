@@ -1,5 +1,12 @@
 use crate::weak_commit::WeakCommit;
+use anyhow::Result;
 use std::fmt::Display;
+
+mod header;
+pub use header::CommitHeader;
+
+mod footer;
+pub use footer::CommitFooter;
 
 mod issue;
 pub use issue::{Issue, TypeIssue};
@@ -32,55 +39,12 @@ pub struct ConventionalCommit<'c> {
 }
 
 impl<'c> ConventionalCommit<'c> {
-    pub fn find_issues(weak_commit: WeakCommit) -> Vec<Issue> {
+    pub fn find_issues(weak_commit: WeakCommit) -> Result<Vec<Issue>> {
         let mut v = Vec::new();
 
-        weak_commit.parse_header();
+        weak_commit.parse_header()?;
 
-        v
-    }
-}
-
-#[derive(Debug)]
-pub struct CommitHeader<'c> {
-    pub kind: &'c str,
-    pub scope: Option<&'c str>,
-    pub desc: &'c str,
-    pub breaking_change: bool,
-}
-
-#[derive(Debug)]
-pub enum CommitFooter<'c> {
-    Simple(&'c str, &'c str),
-    BreakingChange(&'c str),
-}
-
-impl Display for CommitFooter<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        match self {
-            CommitFooter::Simple(k, v) => {
-                write!(f, "{}: {}", k, v)
-            }
-            CommitFooter::BreakingChange(v) => {
-                write!(f, "BREAKING CHANGE: {}", v)
-            }
-        }
-    }
-}
-
-impl Display for CommitHeader<'_> {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", self.kind)?;
-
-        if let Some(scope) = self.scope {
-            write!(f, "({})", scope)?;
-        }
-
-        if self.breaking_change {
-            write!(f, "!")?;
-        }
-
-        write!(f, ": {}", self.desc)
+        Ok(v)
     }
 }
 
@@ -121,7 +85,7 @@ Refs: #1001
 BREAKING CHANGE: supports many footers
 "###
         .trim_start();
-        let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap());
+        let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
         let expected = Vec::new();
         assert_eq!(actual, expected);
     }
@@ -267,80 +231,6 @@ Refs: #1001
 BREAKING CHANGE: supports many footers
 "###
         .trim_start();
-        assert_eq!(format!("{}", actual), expected);
-    }
-}
-
-#[cfg(test)]
-mod header {
-    use super::*;
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn display() {
-        let actual = CommitHeader {
-            kind: "fix",
-            scope: None,
-            breaking_change: false,
-            desc: "a simple fix",
-        };
-        let expected = "fix: a simple fix";
-        assert_eq!(format!("{}", actual), expected);
-    }
-
-    #[test]
-    fn display_scope() {
-        let actual = CommitHeader {
-            kind: "fix",
-            scope: Some("color"),
-            breaking_change: false,
-            desc: "account for the shadows",
-        };
-        let expected = "fix(color): account for the shadows";
-        assert_eq!(format!("{}", actual), expected);
-    }
-
-    #[test]
-    fn display_breaking_change() {
-        let actual = CommitHeader {
-            kind: "feat",
-            scope: None,
-            breaking_change: true,
-            desc: "enable new feature",
-        };
-        let expected = "feat!: enable new feature";
-        assert_eq!(format!("{}", actual), expected);
-    }
-
-    #[test]
-    fn display_breaking_change_and_scope() {
-        let actual = CommitHeader {
-            kind: "feat",
-            scope: Some("wallet"),
-            breaking_change: true,
-            desc: "require set of keys",
-        };
-        let expected = "feat(wallet)!: require set of keys";
-        assert_eq!(format!("{}", actual), expected);
-    }
-}
-
-#[cfg(test)]
-mod footer {
-    use super::*;
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn display() {
-        let actual = CommitFooter::Simple("Refs", "#1001");
-        let expected = "Refs: #1001";
-        assert_eq!(format!("{}", actual), expected);
-    }
-
-    #[test]
-    fn display_breaking_change() {
-        let actual = CommitFooter::BreakingChange("Uses different version now");
-        let expected = "BREAKING CHANGE: Uses different version now";
         assert_eq!(format!("{}", actual), expected);
     }
 }
