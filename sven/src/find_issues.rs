@@ -64,7 +64,7 @@ mod tests {
     use pretty_assertions::assert_eq;
 
     #[test]
-    fn it_works() {
+    fn perfect_reference_no_issues() {
         let commit = r###"
 fix(refs)!: a simple fix
 
@@ -111,6 +111,17 @@ no colon means we do not consider this to be a header at all
     fn no_word_before_colon_no_type() {
         let commit = r###"
 : this means we have no type
+"###
+        .trim_start();
+        let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
+        let expected = vec![Issue::Type(TypeIssue::NotFound)];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn space_at_the_beginning_no_type() {
+        let commit = r###"
+ : space at the beginning instead of a word also means we have no type
 "###
         .trim_start();
         let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
