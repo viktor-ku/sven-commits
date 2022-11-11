@@ -10,7 +10,7 @@ pub struct WeakCommit<'a> {
     pub rows: Vec<Row<'a>>,
 }
 
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Token {
     Word(String),
     Whitespace,
@@ -24,10 +24,14 @@ pub enum Token {
 impl<'a> WeakCommit<'a> {
     pub fn parse_header(&self) -> Result<Vec<Token>> {
         let mut v = Vec::new();
-        let mut wordbuff = String::new();
+
+        if self.rows.is_empty() {
+            return Ok(v);
+        }
 
         let input = self.rows[0].value;
         let rules = CommitParser::parse(Rule::Tokens, input)?;
+        let mut wordbuff = String::new();
 
         for rule in rules {
             match rule.as_rule() {
