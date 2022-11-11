@@ -1,5 +1,3 @@
-use crate::weak_commit::WeakCommit;
-use anyhow::Result;
 use std::fmt::Display;
 
 mod header;
@@ -7,9 +5,6 @@ pub use header::CommitHeader;
 
 mod footer;
 pub use footer::CommitFooter;
-
-mod issue;
-pub use issue::{Issue, TypeIssue};
 
 /// [Conventional Commits Specification](https://www.conventionalcommits.org/en/v1.0.0/)
 ///
@@ -38,16 +33,6 @@ pub struct ConventionalCommit<'c> {
     pub footers: &'c [CommitFooter<'c>],
 }
 
-impl<'c> ConventionalCommit<'c> {
-    pub fn find_issues(weak_commit: WeakCommit) -> Result<Vec<Issue>> {
-        let mut v = Vec::new();
-
-        weak_commit.parse_header()?;
-
-        Ok(v)
-    }
-}
-
 impl Display for ConventionalCommit<'_> {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(f, "{}\n", self.header)?;
@@ -64,30 +49,6 @@ impl Display for ConventionalCommit<'_> {
         }
 
         Ok(())
-    }
-}
-
-#[cfg(test)]
-mod find_issues {
-    use super::*;
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn no_issues() {
-        let commit = r###"
-fix(refs)!: a simple fix
-
-Раз два три
-
-This test proves utf8 works
-
-Refs: #1001
-BREAKING CHANGE: supports many footers
-"###
-        .trim_start();
-        let actual = ConventionalCommit::find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
-        let expected = Vec::new();
-        assert_eq!(actual, expected);
     }
 }
 
