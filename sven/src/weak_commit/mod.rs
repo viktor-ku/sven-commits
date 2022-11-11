@@ -11,8 +11,30 @@ pub struct WeakCommit<'a> {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Token {
-    Word(String),
+pub struct Token {
+    pub kind: TokenKind,
+    // start byte
+    pub start: usize,
+    // end byte
+    pub end: usize,
+}
+
+impl Token {
+    #[inline]
+    pub fn capture<'a>(&self, input: &'a str) -> &'a str {
+        &input[self.start..self.end]
+    }
+}
+
+impl Into<(usize, usize)> for Token {
+    fn into(self) -> (usize, usize) {
+        (self.start, self.end)
+    }
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum TokenKind {
+    Word,
     Whitespace,
     OpenBracket,
     CloseBracket,
@@ -31,44 +53,75 @@ impl<'a> WeakCommit<'a> {
 
         let input = self.rows[0].value;
         let rules = CommitParser::parse(Rule::Tokens, input)?;
-        let mut wordbuff = String::new();
+        let mut wordbuff = (0, 0);
 
         for rule in rules {
             match rule.as_rule() {
                 Rule::Tokens => {
                     for token in rule.into_inner() {
-                        match token.as_rule() {
+                        let span = token.as_span();
+                        let rule = token.as_rule();
+
+                        match rule {
                             Rule::TokenChar => {
-                                let one = token.as_str();
-                                wordbuff.push_str(one);
+                                let bytes = span.end() - span.start();
+                                wordbuff.1 += bytes;
                                 continue;
                             }
                             _ => {
-                                if !wordbuff.is_empty() {
-                                    v.push(Token::Word(wordbuff.clone()));
-                                    wordbuff.clear();
+                                if wordbuff.0 < wordbuff.1 {
+                                    v.push(Token {
+                                        kind: TokenKind::Word,
+                                        start: wordbuff.0,
+                                        end: wordbuff.1,
+                                    });
+                                    wordbuff.0 = wordbuff.1;
                                 }
                             }
                         }
 
-                        match token.as_rule() {
+                        match rule {
                             Rule::TokenOpenBracket => {
-                                v.push(Token::OpenBracket);
+                                v.push(Token {
+                                    kind: TokenKind::OpenBracket,
+                                    start: span.start(),
+                                    end: span.end(),
+                                });
                             }
                             Rule::TokenCloseBracket => {
-                                v.push(Token::CloseBracket);
+                                v.push(Token {
+                                    kind: TokenKind::CloseBracket,
+                                    start: span.start(),
+                                    end: span.end(),
+                                });
                             }
                             Rule::TokenExclMark => {
-                                v.push(Token::ExclMark);
+                                v.push(Token {
+                                    kind: TokenKind::ExclMark,
+                                    start: span.start(),
+                                    end: span.end(),
+                                });
                             }
                             Rule::TokenColon => {
-                                v.push(Token::Colon);
+                                v.push(Token {
+                                    kind: TokenKind::Colon,
+                                    start: span.start(),
+                                    end: span.end(),
+                                });
                             }
                             Rule::TokenWhitespace => {
-                                v.push(Token::Whitespace);
+                                v.push(Token {
+                                    kind: TokenKind::Whitespace,
+                                    start: span.start(),
+                                    end: span.end(),
+                                });
                             }
                             Rule::TokenEOL => {
-                                v.push(Token::EOL);
+                                v.push(Token {
+                                    kind: TokenKind::EOL,
+                                    start: span.start(),
+                                    end: span.end(),
+                                });
                             }
                             _ => {}
                         }
