@@ -16,7 +16,9 @@ pub struct NotFoundIssue {
 #[derive(Debug, PartialEq, Eq)]
 pub struct MisplacedIssue {
     pub subject: IssueSubject,
+    /// nth byte, starting from 0
     pub expected_at: usize,
+    /// nth byte, starting from 0
     pub found_at: usize,
 }
 
@@ -71,9 +73,9 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
                 subject: IssueSubject::Colon,
                 // to know expected_at we should know the boundaries of the type we already
                 // captured
-                expected_at: type_token.end + 1,
+                expected_at: type_token.end,
                 // to know the found_at we should know the boundaries of the colon
-                found_at: colon.end,
+                found_at: colon.start,
             })),
         }
     }
@@ -180,8 +182,8 @@ one two three: expected colon, scope or "!" after the type "one", got "..."
         let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
         let expected = vec![Issue::Misplaced(MisplacedIssue {
             subject: IssueSubject::Colon,
-            expected_at: 4,
-            found_at: 14,
+            expected_at: 3,
+            found_at: 13,
         })];
         assert_eq!(actual, expected);
     }
