@@ -49,17 +49,18 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     // if we don't then it makes no sense to advance because there is simply no type
     // to work with
     let mut iter = tokens.iter();
-    if let Some(token) = iter.next() {
-        match token.kind {
-            TokenKind::Word => {}
+    let type_token: &Token = match iter.next() {
+        None => return,
+        Some(token) => match token.kind {
+            TokenKind::Word => token,
             _ => {
                 issues.push(Issue::NotFound(NotFoundIssue {
                     subject: IssueSubject::Type,
                 }));
                 return;
             }
-        }
-    }
+        },
+    };
 
     // we registered first word to be the type
     // we expect Colon or OpenBracket or ExclMark right after
@@ -70,9 +71,9 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
                 subject: IssueSubject::Colon,
                 // to know expected_at we should know the boundaries of the type we already
                 // captured
-                expected_at: 0,
+                expected_at: type_token.end + 1,
                 // to know the found_at we should know the boundaries of the colon
-                found_at: 0,
+                found_at: colon.end,
             })),
         }
     }
