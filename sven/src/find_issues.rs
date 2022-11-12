@@ -2,20 +2,20 @@ use crate::weak_commit::{Token, TokenKind, WeakCommit};
 use anyhow::Result;
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum IssueSubject {
+pub enum Subject {
     Type,
     Header,
     Colon,
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct NotFoundIssue {
-    pub subject: IssueSubject,
+pub struct Missing {
+    pub subject: Subject,
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub struct MisplacedIssue {
-    pub subject: IssueSubject,
+pub struct Misplaced {
+    pub subject: Subject,
     /// nth byte, starting from 0
     pub expected_at: usize,
     /// nth byte, starting from 0
@@ -24,57 +24,42 @@ pub struct MisplacedIssue {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Issue {
-    NotFound(NotFoundIssue),
-    Misplaced(MisplacedIssue),
+    Missing(Missing),
+    Misplaced(Misplaced),
 }
 
 fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
-    // try to find the first colon
-    //
-    // if we don't then consider the entire header to make no sense in the context
-    // of the conventional commit structure
     let colon = tokens.iter().find(|&token| token.kind == TokenKind::Colon);
 
     if colon.is_none() {
-        issues.push(Issue::NotFound(NotFoundIssue {
-            subject: IssueSubject::Header,
+        issues.push(Issue::Missing(Missing {
+            subject: Subject::Header,
         }));
         return;
     }
 
     let colon = colon.expect("already checked that the colon is present");
 
-    // by this point we should know we have something other than EOL in our
-    // header, as well as we have a colon
-
-    // we know we should find exactly one word at the beginning
-    // if we don't then it makes no sense to advance because there is simply no type
-    // to work with
     let mut iter = tokens.iter();
     let type_token: &Token = match iter.next() {
         None => return,
         Some(token) => match token.kind {
             TokenKind::Word => token,
             _ => {
-                issues.push(Issue::NotFound(NotFoundIssue {
-                    subject: IssueSubject::Type,
+                issues.push(Issue::Missing(Missing {
+                    subject: Subject::Type,
                 }));
                 return;
             }
         },
     };
 
-    // we registered first word to be the type
-    // we expect Colon or OpenBracket or ExclMark right after
     if let Some(token) = iter.next() {
         match token.kind {
             TokenKind::Colon | TokenKind::OpenBracket | TokenKind::ExclMark => {}
-            _ => issues.push(Issue::Misplaced(MisplacedIssue {
-                subject: IssueSubject::Colon,
-                // to know expected_at we should know the boundaries of the type we already
-                // captured
+            _ => issues.push(Issue::Misplaced(Misplaced {
+                subject: Subject::Colon,
                 expected_at: type_token.end,
-                // to know the found_at we should know the boundaries of the colon
                 found_at: colon.start,
             })),
         }
@@ -116,8 +101,8 @@ BREAKING CHANGE: supports many footers
     fn eol_no_header() {
         let commit = "\n";
         let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
-        let expected = vec![Issue::NotFound(NotFoundIssue {
-            subject: IssueSubject::Header,
+        let expected = vec![Issue::Missing(Missing {
+            subject: Subject::Header,
         })];
         assert_eq!(actual, expected);
     }
@@ -126,8 +111,8 @@ BREAKING CHANGE: supports many footers
     fn empty_no_header() {
         let commit = "";
         let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
-        let expected = vec![Issue::NotFound(NotFoundIssue {
-            subject: IssueSubject::Header,
+        let expected = vec![Issue::Missing(Missing {
+            subject: Subject::Header,
         })];
         assert_eq!(actual, expected);
     }
@@ -139,8 +124,8 @@ no colon means we do not consider this to be a header at all
 "###
         .trim_start();
         let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
-        let expected = vec![Issue::NotFound(NotFoundIssue {
-            subject: IssueSubject::Header,
+        let expected = vec![Issue::Missing(Missing {
+            subject: Subject::Header,
         })];
         assert_eq!(actual, expected);
     }
@@ -152,8 +137,8 @@ no colon means we do not consider this to be a header at all
 "###
         .trim_start();
         let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
-        let expected = vec![Issue::NotFound(NotFoundIssue {
-            subject: IssueSubject::Type,
+        let expected = vec![Issue::Missing(Missing {
+            subject: Subject::Type,
         })];
         assert_eq!(actual, expected);
     }
@@ -167,8 +152,8 @@ no colon means we do not consider this to be a header at all
 "###
         .trim_start();
         let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
-        let expected = vec![Issue::NotFound(NotFoundIssue {
-            subject: IssueSubject::Type,
+        let expected = vec![Issue::Missing(Missing {
+            subject: Subject::Type,
         })];
         assert_eq!(actual, expected);
     }
@@ -180,8 +165,8 @@ one two three: expected colon, scope or "!" after the type "one", got "..."
 "###
         .trim_start();
         let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
-        let expected = vec![Issue::Misplaced(MisplacedIssue {
-            subject: IssueSubject::Colon,
+        let expected = vec![Issue::Misplaced(Misplaced {
+            subject: Subject::Colon,
             expected_at: 3,
             found_at: 13,
         })];
