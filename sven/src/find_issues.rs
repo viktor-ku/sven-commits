@@ -55,7 +55,7 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     if colon_token.is_none() && type_token.is_some() {
         issues.push(Issue::Missing(Missing {
             subject: Subject::Colon,
-            at: type_token.unwrap().end,
+            at: type_token.unwrap().bytes.end,
         }));
     }
 
@@ -72,14 +72,14 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
                     if token.kind == TokenKind::EOL {
                         issues.push(Issue::Missing(Missing {
                             subject: Subject::Desc,
-                            at: token.start,
+                            at: token.bytes.start,
                         }));
                     }
                 }
             } else if token.kind == TokenKind::EOL {
                 issues.push(Issue::Missing(Missing {
                     subject: Subject::Desc,
-                    at: token.end,
+                    at: token.bytes.end,
                 }));
             }
         }
@@ -88,10 +88,23 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     }
 }
 
-pub fn find_issues(weak_commit: WeakCommit) -> Result<Vec<Issue>> {
+pub fn find_issues(commit: &str) -> Result<Vec<Issue>> {
+    let weak_commit = WeakCommit::parse(commit)?;
     let mut v = Vec::new();
 
-    let tokens = weak_commit.parse_header()?;
+    if weak_commit.rows.is_empty() {
+        v.push(Issue::Missing(Missing {
+            subject: Subject::Header,
+            at: 0,
+        }));
+        return Ok(v);
+    }
+
+    let header_row = weak_commit.rows.first().unwrap();
+    let header_str = &commit[header_row.bytes.start..header_row.bytes.end];
+
+    let tokens = WeakCommit::parse_header(header_str)?;
+
     find_header_issues(&tokens, &mut v);
 
     Ok(v)
@@ -115,14 +128,14 @@ Refs: #1001
 BREAKING CHANGE: supports many footers
 "###
         .trim_start();
-        let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
+        let actual = find_issues(commit).unwrap();
         assert_eq!(actual, Vec::new());
     }
 
     #[test]
     fn eol_no_header() {
         let commit = "\n";
-        let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
+        let actual = find_issues(commit).unwrap();
         let expected = vec![Issue::Missing(Missing {
             subject: Subject::Header,
             at: 0,
@@ -133,7 +146,7 @@ BREAKING CHANGE: supports many footers
     #[test]
     fn empty_no_header() {
         let commit = "";
-        let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
+        let actual = find_issues(commit).unwrap();
         let expected = vec![Issue::Missing(Missing {
             subject: Subject::Header,
             at: 0,
@@ -147,7 +160,7 @@ BREAKING CHANGE: supports many footers
 colon missing after the type "colon"
 "###
         .trim_start();
-        let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
+        let actual = find_issues(commit).unwrap();
         let expected = vec![Issue::Missing(Missing {
             subject: Subject::Colon,
             at: 5,
@@ -161,7 +174,7 @@ colon missing after the type "colon"
 :
 "###
         .trim_start();
-        let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
+        let actual = find_issues(commit).unwrap();
         let expected = vec![
             Issue::Missing(Missing {
                 subject: Subject::Type,
@@ -183,7 +196,7 @@ colon missing after the type "colon"
 "###
         .trim_start();
         println!("{:#?}", commit);
-        let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
+        let actual = find_issues(commit).unwrap();
         let expected = vec![
             Issue::Missing(Missing {
                 subject: Subject::Type,
