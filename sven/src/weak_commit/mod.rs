@@ -53,7 +53,7 @@ impl<'a> WeakCommit<'a> {
 
         let input = self.rows[0].value;
         let rules = CommitParser::parse(Rule::Tokens, input)?;
-        let mut wordbuff = (0, 0);
+        let mut word_bytes = 0;
 
         for rule in rules {
             match rule.as_rule() {
@@ -65,17 +65,17 @@ impl<'a> WeakCommit<'a> {
                         match rule {
                             Rule::TokenChar => {
                                 let bytes = span.end() - span.start();
-                                wordbuff.1 += bytes;
+                                word_bytes += bytes;
                                 continue;
                             }
                             _ => {
-                                if wordbuff.0 < wordbuff.1 {
+                                if word_bytes > 0 {
                                     v.push(Token {
                                         kind: TokenKind::Word,
-                                        start: wordbuff.0,
-                                        end: wordbuff.1,
+                                        start: span.start() - word_bytes,
+                                        end: span.start(),
                                     });
-                                    wordbuff.0 = wordbuff.1;
+                                    word_bytes = 0;
                                 }
                             }
                         }
@@ -128,6 +128,24 @@ impl<'a> WeakCommit<'a> {
                     }
                 }
                 _ => {}
+            }
+        }
+
+        // we have to do one more iteration to clear the last word if there is any
+        if word_bytes > 0 {
+            match v.last() {
+                Some(token) => {
+                    v.push(Token {
+                        kind: TokenKind::Word,
+                        start: token.end,
+                        end: token.end + word_bytes,
+                    });
+                }
+                None => v.push(Token {
+                    kind: TokenKind::Word,
+                    start: 0,
+                    end: word_bytes,
+                }),
             }
         }
 
@@ -206,6 +224,125 @@ impl<'row> Row<'row> {
         };
 
         unreachable!()
+    }
+}
+
+#[cfg(test)]
+mod parse_header {
+    use super::*;
+    use pretty_assertions::assert_eq;
+
+    #[test]
+    fn ends_with_eol() {
+        let commit = WeakCommit::parse("eol\n").unwrap();
+        let actual = commit.parse_header().unwrap();
+        let expected = vec![
+            Token {
+                kind: TokenKind::Word,
+                start: 0,
+                end: 3,
+            },
+            Token {
+                kind: TokenKind::EOL,
+                start: 3,
+                end: 4,
+            },
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn space_at_the_start_valid_next_word_align() {
+        let commit = WeakCommit::parse(" space").unwrap();
+        let actual = commit.parse_header().unwrap();
+        let expected = vec![
+            Token {
+                kind: TokenKind::Whitespace,
+                start: 0,
+                end: 1,
+            },
+            Token {
+                kind: TokenKind::Word,
+                start: 1,
+                end: 6,
+            },
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn one_word() {
+        let commit = WeakCommit::parse("fix").unwrap();
+        let actual = commit.parse_header().unwrap();
+        let expected = vec![Token {
+            kind: TokenKind::Word,
+            start: 0,
+            end: 3,
+        }];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn some_string_utf8() {
+        let commit = WeakCommit::parse("рад два три").unwrap();
+        let actual = commit.parse_header().unwrap();
+        let expected = vec![
+            Token {
+                kind: TokenKind::Word,
+                start: 0,
+                end: 6,
+            },
+            Token {
+                kind: TokenKind::Whitespace,
+                start: 6,
+                end: 7,
+            },
+            Token {
+                kind: TokenKind::Word,
+                start: 7,
+                end: 13,
+            },
+            Token {
+                kind: TokenKind::Whitespace,
+                start: 13,
+                end: 14,
+            },
+            Token {
+                kind: TokenKind::Word,
+                start: 14,
+                end: 20,
+            },
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn working_commit() {
+        let commit = WeakCommit::parse("fix: me").unwrap();
+        let actual = commit.parse_header().unwrap();
+        let expected = vec![
+            Token {
+                kind: TokenKind::Word,
+                start: 0,
+                end: 3,
+            },
+            Token {
+                kind: TokenKind::Colon,
+                start: 3,
+                end: 4,
+            },
+            Token {
+                kind: TokenKind::Whitespace,
+                start: 4,
+                end: 5,
+            },
+            Token {
+                kind: TokenKind::Word,
+                start: 5,
+                end: 7,
+            },
+        ];
+        assert_eq!(actual, expected);
     }
 }
 
