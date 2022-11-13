@@ -207,6 +207,13 @@ pub struct Row<'row> {
 }
 
 impl<'row> Row<'row> {
+    /// Get the expected index for the current row, if being captured from an array of relevant lines:
+    /// `lines[row.row_index()]` in a safe way.
+    #[inline]
+    pub fn row_index(&self) -> usize {
+        self.row.checked_sub(1).unwrap_or(0)
+    }
+
     fn probe_blank_line(value: &'row str) -> u8 {
         match CommitParser::parse(Rule::ProbeBlankLine, value) {
             Ok(rules) => {
