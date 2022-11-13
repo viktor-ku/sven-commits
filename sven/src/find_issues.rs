@@ -62,22 +62,29 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     if colon_token.is_some() {
         let mut iter = tokens.iter();
 
-        // advance the iterator until we find the colon
-        iter.find(|&token| token.kind == TokenKind::Colon)
-            .expect("todo!: handle missing colon when looking for desc");
+        iter.find(|&token| token.kind == TokenKind::Colon).unwrap();
 
-        // now we expect that the next token will be whitespace
-        // and then anything other than EOL after
+        // todo!: handle no more tokens after colon
 
         if let Some(token) = iter.next() {
-            // todo!: handle no more tokens after colon
-            if token.kind == TokenKind::EOL {
+            if token.kind == TokenKind::Whitespace {
+                if let Some(token) = iter.next() {
+                    if token.kind == TokenKind::EOL {
+                        issues.push(Issue::Missing(Missing {
+                            subject: Subject::Desc,
+                            at: token.start,
+                        }));
+                    }
+                }
+            } else if token.kind == TokenKind::EOL {
                 issues.push(Issue::Missing(Missing {
                     subject: Subject::Desc,
                     at: token.end,
                 }));
             }
         }
+
+        // by this point iter is at the start of the Desc
     }
 }
 
@@ -149,11 +156,33 @@ colon missing after the type "colon"
     }
 
     #[test]
-    fn missing_type_if_only_colon() {
+    fn missing_type_and_desc_if_only_colon() {
         let commit = r###"
 :
 "###
         .trim_start();
+        let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
+        let expected = vec![
+            Issue::Missing(Missing {
+                subject: Subject::Type,
+                at: 0,
+            }),
+            Issue::Missing(Missing {
+                subject: Subject::Desc,
+                at: 2,
+            }),
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn missing_type_and_desc_when_nothing_after_colon_then_whitespace() {
+        let commit = r###"
+: 
+# note there is an expected WHITESPACE (" ") character at the end of the header above
+"###
+        .trim_start();
+        println!("{:#?}", commit);
         let actual = find_issues(WeakCommit::parse(commit).unwrap()).unwrap();
         let expected = vec![
             Issue::Missing(Missing {
