@@ -1,6 +1,9 @@
 use crate::additive::Additive;
 use anyhow::Result;
+use bytes_range::BytesRange;
 use pest::Parser;
+
+mod bytes_range;
 
 #[derive(Parser)]
 #[grammar = "./weak_commit/grammar.pest"] // relative to src
@@ -16,20 +19,6 @@ pub struct Token {
     pub id: usize,
     pub kind: TokenKind,
     pub bytes: BytesRange,
-}
-
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
-pub struct BytesRange {
-    /// Starting byte
-    pub start: usize,
-    /// Ending byte
-    pub end: usize,
-}
-
-impl Into<(usize, usize)> for BytesRange {
-    fn into(self) -> (usize, usize) {
-        (self.start, self.end)
-    }
 }
 
 impl Token {
