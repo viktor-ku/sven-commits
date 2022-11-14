@@ -95,20 +95,7 @@ pub fn find_issues(commit: &str) -> Result<Vec<Issue>> {
     let weak_commit = WeakCommit::parse(commit)?;
     let mut v = Vec::new();
 
-    if weak_commit.rows.is_empty() {
-        v.push(Issue::Missing(Missing {
-            subject: Subject::Header,
-            at: 0,
-        }));
-        return Ok(v);
-    }
-
-    let header_row = weak_commit.rows.first().unwrap();
-    let header_str = &commit[header_row.bytes.start..header_row.bytes.end];
-
-    let tokens = parse_header(header_str)?;
-
-    find_header_issues(&tokens, &mut v);
+    find_header_issues(&weak_commit.header, &mut v);
 
     Ok(v)
 }

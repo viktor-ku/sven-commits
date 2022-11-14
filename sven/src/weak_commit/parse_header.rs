@@ -1,8 +1,7 @@
+use super::{bytes_range::BytesRange, CRule, CommitParser};
 use crate::additive::Additive;
 use anyhow::Result;
 use pest::Parser;
-
-use super::{bytes_range::BytesRange, CRule, CommitParser};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Token {
@@ -166,7 +165,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
 }
 
 #[cfg(test)]
-mod parse_header {
+mod rows {
     use super::*;
     use pretty_assertions::assert_eq;
 

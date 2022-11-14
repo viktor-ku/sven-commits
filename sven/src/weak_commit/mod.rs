@@ -1,4 +1,7 @@
-use self::parser::{CRule, CommitParser};
+use self::{
+    parse_header::{parse_header, Token},
+    parser::{CRule, CommitParser},
+};
 use anyhow::Result;
 use pest::Parser;
 
@@ -13,6 +16,7 @@ pub use row::Row;
 
 #[derive(Debug, PartialEq)]
 pub struct WeakCommit {
+    pub header: Vec<Token>,
     pub rows: Vec<Row>,
 }
 
@@ -51,7 +55,15 @@ impl WeakCommit {
             }
         }
 
-        Ok(Self { rows })
+        let header = match rows.first() {
+            Some(row) => {
+                let header_str = &commit[row.bytes.start..row.bytes.end];
+                parse_header(header_str)?
+            }
+            None => Vec::new(),
+        };
+
+        Ok(Self { rows, header })
     }
 }
 
@@ -63,68 +75,62 @@ mod producing {
     #[test]
     fn singleline() {
         let actual = WeakCommit::parse("fix(app)!: me").unwrap();
-        let expected = WeakCommit {
-            rows: vec![Row {
-                row: 1,
-                blank: 0,
-                bytes: BytesRange { start: 0, end: 13 },
-            }],
-        };
-        assert_eq!(actual, expected);
+        let expected = vec![Row {
+            row: 1,
+            blank: 0,
+            bytes: BytesRange { start: 0, end: 13 },
+        }];
+        assert_eq!(actual.rows, expected);
     }
 
     #[test]
     fn multiline() {
         let actual = WeakCommit::parse("one\n\ntwo\n\nthree").unwrap();
-        let expected = WeakCommit {
-            rows: vec![
-                Row {
-                    row: 1,
-                    blank: 0,
-                    bytes: BytesRange { start: 0, end: 4 },
-                },
-                Row {
-                    row: 2,
-                    blank: 1,
-                    bytes: BytesRange { start: 4, end: 5 },
-                },
-                Row {
-                    row: 3,
-                    blank: 0,
-                    bytes: BytesRange { start: 5, end: 9 },
-                },
-                Row {
-                    row: 4,
-                    blank: 1,
-                    bytes: BytesRange { start: 9, end: 10 },
-                },
-                Row {
-                    row: 5,
-                    blank: 0,
-                    bytes: BytesRange { start: 10, end: 15 },
-                },
-            ],
-        };
-        assert_eq!(actual, expected);
+        let expected = vec![
+            Row {
+                row: 1,
+                blank: 0,
+                bytes: BytesRange { start: 0, end: 4 },
+            },
+            Row {
+                row: 2,
+                blank: 1,
+                bytes: BytesRange { start: 4, end: 5 },
+            },
+            Row {
+                row: 3,
+                blank: 0,
+                bytes: BytesRange { start: 5, end: 9 },
+            },
+            Row {
+                row: 4,
+                blank: 1,
+                bytes: BytesRange { start: 9, end: 10 },
+            },
+            Row {
+                row: 5,
+                blank: 0,
+                bytes: BytesRange { start: 10, end: 15 },
+            },
+        ];
+        assert_eq!(actual.rows, expected);
     }
 
     #[test]
     fn multiline_utf8() {
         let actual = WeakCommit::parse("раз\nдва").unwrap();
-        let expected = WeakCommit {
-            rows: vec![
-                Row {
-                    row: 1,
-                    blank: 0,
-                    bytes: BytesRange { start: 0, end: 7 },
-                },
-                Row {
-                    row: 2,
-                    blank: 0,
-                    bytes: BytesRange { start: 7, end: 13 },
-                },
-            ],
-        };
-        assert_eq!(actual, expected);
+        let expected = vec![
+            Row {
+                row: 1,
+                blank: 0,
+                bytes: BytesRange { start: 0, end: 7 },
+            },
+            Row {
+                row: 2,
+                blank: 0,
+                bytes: BytesRange { start: 7, end: 13 },
+            },
+        ];
+        assert_eq!(actual.rows, expected);
     }
 }
