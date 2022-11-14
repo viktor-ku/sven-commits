@@ -1,4 +1,7 @@
-use crate::weak_commit::{Token, TokenKind, WeakCommit};
+use crate::weak_commit::{
+    parse_header::{parse_header, Token, TokenKind},
+    WeakCommit,
+};
 use anyhow::Result;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -103,7 +106,7 @@ pub fn find_issues(commit: &str) -> Result<Vec<Issue>> {
     let header_row = weak_commit.rows.first().unwrap();
     let header_str = &commit[header_row.bytes.start..header_row.bytes.end];
 
-    let tokens = WeakCommit::parse_header(header_str)?;
+    let tokens = parse_header(header_str)?;
 
     find_header_issues(&tokens, &mut v);
 
