@@ -1,3 +1,4 @@
+use crate::additive::Additive;
 use anyhow::Result;
 use pest::Parser;
 
@@ -12,6 +13,7 @@ pub struct WeakCommit {
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Token {
+    pub id: usize,
     pub kind: TokenKind,
     pub bytes: BytesRange,
 }
@@ -59,6 +61,7 @@ impl WeakCommit {
         let mut v = Vec::new();
         let mut word_bytes = 0;
         let rules = CommitParser::parse(Rule::Tokens, header)?;
+        let mut id = Additive::new();
 
         for rule in rules {
             match rule.as_rule() {
@@ -76,6 +79,7 @@ impl WeakCommit {
                             _ => {
                                 if word_bytes > 0 {
                                     v.push(Token {
+                                        id: id.stamp(),
                                         kind: TokenKind::Word,
                                         bytes: BytesRange {
                                             start: span.start() - word_bytes,
@@ -90,6 +94,7 @@ impl WeakCommit {
                         match rule {
                             Rule::TokenOpenBracket => {
                                 v.push(Token {
+                                    id: id.stamp(),
                                     kind: TokenKind::OpenBracket,
                                     bytes: BytesRange {
                                         start: span.start(),
@@ -99,6 +104,7 @@ impl WeakCommit {
                             }
                             Rule::TokenCloseBracket => {
                                 v.push(Token {
+                                    id: id.stamp(),
                                     kind: TokenKind::CloseBracket,
                                     bytes: BytesRange {
                                         start: span.start(),
@@ -108,6 +114,7 @@ impl WeakCommit {
                             }
                             Rule::TokenExclMark => {
                                 v.push(Token {
+                                    id: id.stamp(),
                                     kind: TokenKind::ExclMark,
                                     bytes: BytesRange {
                                         start: span.start(),
@@ -117,6 +124,7 @@ impl WeakCommit {
                             }
                             Rule::TokenColon => {
                                 v.push(Token {
+                                    id: id.stamp(),
                                     kind: TokenKind::Colon,
                                     bytes: BytesRange {
                                         start: span.start(),
@@ -126,6 +134,7 @@ impl WeakCommit {
                             }
                             Rule::TokenWhitespace => {
                                 v.push(Token {
+                                    id: id.stamp(),
                                     kind: TokenKind::Whitespace,
                                     bytes: BytesRange {
                                         start: span.start(),
@@ -135,6 +144,7 @@ impl WeakCommit {
                             }
                             Rule::TokenEOL => {
                                 v.push(Token {
+                                    id: id.stamp(),
                                     kind: TokenKind::EOL,
                                     bytes: BytesRange {
                                         start: span.start(),
@@ -155,6 +165,7 @@ impl WeakCommit {
             match v.last() {
                 Some(token) => {
                     v.push(Token {
+                        id: id.stamp(),
                         kind: TokenKind::Word,
                         bytes: BytesRange {
                             start: token.bytes.end,
@@ -163,6 +174,7 @@ impl WeakCommit {
                     });
                 }
                 None => v.push(Token {
+                    id: id.stamp(),
                     kind: TokenKind::Word,
                     bytes: BytesRange {
                         start: 0,
@@ -267,10 +279,12 @@ mod parse_header {
         let actual = WeakCommit::parse_header("eol\n").unwrap();
         let expected = vec![
             Token {
+                id: 1,
                 kind: TokenKind::Word,
                 bytes: BytesRange { start: 0, end: 3 },
             },
             Token {
+                id: 2,
                 kind: TokenKind::EOL,
                 bytes: BytesRange { start: 3, end: 4 },
             },
@@ -283,10 +297,12 @@ mod parse_header {
         let actual = WeakCommit::parse_header(" space").unwrap();
         let expected = vec![
             Token {
+                id: 1,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 0, end: 1 },
             },
             Token {
+                id: 2,
                 kind: TokenKind::Word,
                 bytes: BytesRange { start: 1, end: 6 },
             },
@@ -298,6 +314,7 @@ mod parse_header {
     fn one_word() {
         let actual = WeakCommit::parse_header("fix").unwrap();
         let expected = vec![Token {
+            id: 1,
             kind: TokenKind::Word,
             bytes: BytesRange { start: 0, end: 3 },
         }];
@@ -309,22 +326,27 @@ mod parse_header {
         let actual = WeakCommit::parse_header("рад два три").unwrap();
         let expected = vec![
             Token {
+                id: 1,
                 kind: TokenKind::Word,
                 bytes: BytesRange { start: 0, end: 6 },
             },
             Token {
+                id: 2,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 6, end: 7 },
             },
             Token {
+                id: 3,
                 kind: TokenKind::Word,
                 bytes: BytesRange { start: 7, end: 13 },
             },
             Token {
+                id: 4,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 13, end: 14 },
             },
             Token {
+                id: 5,
                 kind: TokenKind::Word,
                 bytes: BytesRange { start: 14, end: 20 },
             },
@@ -337,18 +359,22 @@ mod parse_header {
         let actual = WeakCommit::parse_header("fix: me").unwrap();
         let expected = vec![
             Token {
+                id: 1,
                 kind: TokenKind::Word,
                 bytes: BytesRange { start: 0, end: 3 },
             },
             Token {
+                id: 2,
                 kind: TokenKind::Colon,
                 bytes: BytesRange { start: 3, end: 4 },
             },
             Token {
+                id: 3,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 4, end: 5 },
             },
             Token {
+                id: 4,
                 kind: TokenKind::Word,
                 bytes: BytesRange { start: 5, end: 7 },
             },
