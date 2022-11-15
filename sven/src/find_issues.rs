@@ -45,7 +45,7 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
         return;
     }
 
-    let type_token = tokens.iter().find(|&token| token.kind == TokenKind::Word);
+    let type_token = tokens.iter().find(|&token| token.kind == TokenKind::Seq);
     let colon_token = tokens.iter().find(|&token| token.kind == TokenKind::Colon);
 
     if type_token.is_none() {

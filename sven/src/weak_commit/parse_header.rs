@@ -25,7 +25,8 @@ impl Into<(usize, usize)> for Token {
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum TokenKind {
-    Word,
+    /// Any sequence of any utf8 characters, excluding other kinds of token
+    Seq,
     Whitespace,
     OpenBracket,
     CloseBracket,
@@ -57,7 +58,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                             if word_bytes > 0 {
                                 v.push(Token {
                                     id: id.stamp(),
-                                    kind: TokenKind::Word,
+                                    kind: TokenKind::Seq,
                                     bytes: BytesRange {
                                         start: span.start() - word_bytes,
                                         end: span.end() - 1,
@@ -143,7 +144,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
             Some(token) => {
                 v.push(Token {
                     id: id.stamp(),
-                    kind: TokenKind::Word,
+                    kind: TokenKind::Seq,
                     bytes: BytesRange {
                         start: token.bytes.end,
                         end: token.bytes.end + word_bytes,
@@ -152,7 +153,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
             }
             None => v.push(Token {
                 id: id.stamp(),
-                kind: TokenKind::Word,
+                kind: TokenKind::Seq,
                 bytes: BytesRange {
                     start: 0,
                     end: word_bytes,
@@ -175,7 +176,7 @@ mod rows {
         let expected = vec![
             Token {
                 id: 1,
-                kind: TokenKind::Word,
+                kind: TokenKind::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
             },
             Token {
@@ -198,7 +199,7 @@ mod rows {
             },
             Token {
                 id: 2,
-                kind: TokenKind::Word,
+                kind: TokenKind::Seq,
                 bytes: BytesRange { start: 1, end: 6 },
             },
         ];
@@ -210,7 +211,7 @@ mod rows {
         let actual = parse_header("fix").unwrap();
         let expected = vec![Token {
             id: 1,
-            kind: TokenKind::Word,
+            kind: TokenKind::Seq,
             bytes: BytesRange { start: 0, end: 3 },
         }];
         assert_eq!(actual, expected);
@@ -222,7 +223,7 @@ mod rows {
         let expected = vec![
             Token {
                 id: 1,
-                kind: TokenKind::Word,
+                kind: TokenKind::Seq,
                 bytes: BytesRange { start: 0, end: 6 },
             },
             Token {
@@ -232,7 +233,7 @@ mod rows {
             },
             Token {
                 id: 3,
-                kind: TokenKind::Word,
+                kind: TokenKind::Seq,
                 bytes: BytesRange { start: 7, end: 13 },
             },
             Token {
@@ -242,7 +243,7 @@ mod rows {
             },
             Token {
                 id: 5,
-                kind: TokenKind::Word,
+                kind: TokenKind::Seq,
                 bytes: BytesRange { start: 14, end: 20 },
             },
         ];
@@ -255,7 +256,7 @@ mod rows {
         let expected = vec![
             Token {
                 id: 1,
-                kind: TokenKind::Word,
+                kind: TokenKind::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
             },
             Token {
@@ -270,7 +271,7 @@ mod rows {
             },
             Token {
                 id: 4,
-                kind: TokenKind::Word,
+                kind: TokenKind::Seq,
                 bytes: BytesRange { start: 5, end: 7 },
             },
         ];
