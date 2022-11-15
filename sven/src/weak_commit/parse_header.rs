@@ -15,6 +15,12 @@ impl Token {
     pub fn capture<'a>(&self, input: &'a str) -> &'a str {
         &input[self.bytes.start..self.bytes.end]
     }
+
+    /// Total bytes which token takes
+    #[inline]
+    pub fn total(&self) -> usize {
+        self.bytes.total()
+    }
 }
 
 impl Into<(usize, usize)> for Token {
