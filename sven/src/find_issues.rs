@@ -1,6 +1,9 @@
-use crate::weak_commit::{
-    parse_header::{parse_header, Token, TokenKind},
-    WeakCommit,
+use crate::{
+    at::At,
+    weak_commit::{
+        parse_header::{Token, TokenKind},
+        WeakCommit,
+    },
 };
 use anyhow::Result;
 
@@ -15,8 +18,7 @@ pub enum Subject {
 #[derive(Debug, PartialEq, Eq)]
 pub struct Missing {
     pub subject: Subject,
-    /// nth byte, starting from 0 (column)
-    pub at: usize,
+    pub expected_at: At,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -50,7 +52,7 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     if tokens.is_empty() || (tokens.len() == 1 && tokens.first().unwrap().kind == TokenKind::EOL) {
         issues.push(Issue::Missing(Missing {
             subject: Subject::Header,
-            at: 0,
+            expected_at: At::start(),
         }));
         return;
     }
@@ -75,14 +77,14 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
         }
     }
 
+    println!("{:#?}", paper);
+
     if paper.colon_pocket.is_none() {
         issues.push(Issue::Missing(Missing {
             subject: Subject::Colon,
-            at: paper.type_pocket.unwrap().bytes.end,
+            expected_at: At::After(paper.type_pocket.unwrap().id),
         }));
     }
-
-    println!("{:#?}", paper);
 }
 
 pub fn find_issues(commit: &str) -> Result<Vec<Issue>> {
@@ -122,7 +124,7 @@ BREAKING CHANGE: supports many footers
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue::Missing(Missing {
             subject: Subject::Header,
-            at: 0,
+            expected_at: At::start(),
         })];
         assert_eq!(actual, expected);
     }
@@ -133,7 +135,7 @@ BREAKING CHANGE: supports many footers
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue::Missing(Missing {
             subject: Subject::Header,
-            at: 0,
+            expected_at: At::start(),
         })];
         assert_eq!(actual, expected);
     }
@@ -147,7 +149,7 @@ colon missing after the type "colon"
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue::Missing(Missing {
             subject: Subject::Colon,
-            at: 5,
+            expected_at: At::After(1),
         })];
         assert_eq!(actual, expected);
     }
