@@ -1,13 +1,29 @@
+use crate::{find_issues::Issue, weak_commit::parse_header::Token};
+
 #[derive(Debug, PartialEq, Eq)]
-pub enum At {
-    Exact(usize),
-    After(usize),
-    Before(usize),
+pub enum AtPos {
+    After,
+    Before,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum AtTarget {
+    Root,
+    Token(usize),
+    Issue(usize),
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub struct At {
+    pub pos: AtPos,
+    pub target: AtTarget,
 }
 
 impl At {
-    #[inline]
     pub fn start() -> Self {
-        Self::Exact(1)
+        Self {
+            pos: AtPos::After,
+            target: AtTarget::Root,
+        }
     }
 }

@@ -1,5 +1,6 @@
 use crate::{
-    at::At,
+    additive::Additive,
+    at::{At, AtPos, AtTarget},
     weak_commit::{
         parse_header::{Token, TokenKind},
         WeakCommit,
@@ -13,10 +14,12 @@ pub enum Subject {
     Header,
     Colon,
     Desc,
+    Whitespace,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Missing {
+    pub id: usize,
     pub subject: Subject,
     pub expected_at: At,
 }
@@ -48,9 +51,11 @@ pub struct Paper<'a> {
 
 fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     println!("{:#?}", tokens);
+    let mut id = Additive::new();
 
     if tokens.is_empty() || (tokens.len() == 1 && tokens.first().unwrap().kind == TokenKind::EOL) {
         issues.push(Issue::Missing(Missing {
+            id: id.stamp(),
             subject: Subject::Header,
             expected_at: At::start(),
         }));
@@ -58,17 +63,25 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     }
 
     let mut paper = Paper::default();
+    let mut desc_start = 0;
 
     for token in tokens {
         match token.kind {
             TokenKind::Seq => match paper.type_pocket {
-                Some(_) => {}
+                Some(_) => {
+                    if desc_start > 0 {
+                        paper.desc_pocket = Some(token);
+                    }
+                }
                 None => paper.type_pocket = Some(token),
             },
-            TokenKind::Whitespace => match paper.whitespace_pocket {
-                Some(_) => {}
-                None => paper.whitespace_pocket = Some(token),
-            },
+            TokenKind::Whitespace => {
+                desc_start += 1;
+                match paper.whitespace_pocket {
+                    Some(_) => {}
+                    None => paper.whitespace_pocket = Some(token),
+                }
+            }
             TokenKind::Colon => match paper.whitespace_pocket {
                 Some(_) => {}
                 None => paper.colon_pocket = Some(token),
@@ -79,10 +92,44 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
 
     println!("{:#?}", paper);
 
+    if paper.type_pocket.is_none() {
+        issues.push(Issue::Missing(Missing {
+            id: id.stamp(),
+            subject: Subject::Type,
+            expected_at: At {
+                pos: AtPos::After,
+                target: AtTarget::Root,
+            },
+        }));
+    }
     if paper.colon_pocket.is_none() {
         issues.push(Issue::Missing(Missing {
+            id: id.stamp(),
             subject: Subject::Colon,
-            expected_at: At::After(paper.type_pocket.unwrap().id),
+            expected_at: At {
+                pos: AtPos::After,
+                target: AtTarget::Token(paper.type_pocket.unwrap().id),
+            },
+        }));
+    }
+    if paper.whitespace_pocket.is_none() {
+        issues.push(Issue::Missing(Missing {
+            id: id.stamp(),
+            subject: Subject::Whitespace,
+            expected_at: At {
+                pos: AtPos::After,
+                target: AtTarget::Token(paper.colon_pocket.unwrap().id),
+            },
+        }));
+    }
+    if paper.desc_pocket.is_none() {
+        issues.push(Issue::Missing(Missing {
+            id: id.stamp(),
+            subject: Subject::Desc,
+            expected_at: At {
+                pos: AtPos::After,
+                target: AtTarget::Issue(2),
+            },
         }));
     }
 }
@@ -123,6 +170,7 @@ BREAKING CHANGE: supports many footers
         let commit = "\n";
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue::Missing(Missing {
+            id: 1,
             subject: Subject::Header,
             expected_at: At::start(),
         })];
@@ -134,6 +182,7 @@ BREAKING CHANGE: supports many footers
         let commit = "";
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue::Missing(Missing {
+            id: 1,
             subject: Subject::Header,
             expected_at: At::start(),
         })];
@@ -148,32 +197,49 @@ colon missing after the type "colon"
         .trim_start();
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue::Missing(Missing {
+            id: 1,
             subject: Subject::Colon,
-            expected_at: At::After(1),
+            expected_at: At {
+                pos: AtPos::After,
+                target: AtTarget::Token(1),
+            },
         })];
         assert_eq!(actual, expected);
     }
 
-    //     #[test]
-    //     fn missing_type_and_desc_if_only_colon() {
-    //         let commit = r###"
-    // :
-    // "###
-    //         .trim_start();
-    //         let actual = find_issues(commit).unwrap();
-    //         let expected = vec![
-    //             Issue::Missing(Missing {
-    //                 subject: Subject::Type,
-    //                 at: 0,
-    //             }),
-    //             Issue::Missing(Missing {
-    //                 subject: Subject::Desc,
-    //                 at: 2,
-    //             }),
-    //         ];
-    //         assert_eq!(actual, expected);
-    //     }
-    //
+    #[test]
+    fn missing_type_and_desc_if_only_colon() {
+        let commit = r###"
+:
+"###
+        .trim_start();
+        let actual = find_issues(commit).unwrap();
+        let expected = vec![
+            Issue::Missing(Missing {
+                id: 1,
+                subject: Subject::Type,
+                expected_at: At::start(),
+            }),
+            Issue::Missing(Missing {
+                id: 2,
+                subject: Subject::Whitespace,
+                expected_at: At {
+                    pos: AtPos::After,
+                    target: AtTarget::Token(1),
+                },
+            }),
+            Issue::Missing(Missing {
+                id: 3,
+                subject: Subject::Desc,
+                expected_at: At {
+                    pos: AtPos::After,
+                    target: AtTarget::Issue(2),
+                },
+            }),
+        ];
+        assert_eq!(actual, expected);
+    }
+
     //     #[test]
     //     fn missing_type_and_desc_when_nothing_after_colon_then_whitespace() {
     //         let commit = r###"
