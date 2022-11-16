@@ -1,4 +1,6 @@
-#[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
+use std::fmt::Debug;
+
+#[derive(PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
 pub struct BytesRange {
     /// Starting byte
     pub start: usize,
@@ -19,5 +21,11 @@ impl BytesRange {
 impl Into<(usize, usize)> for BytesRange {
     fn into(self) -> (usize, usize) {
         (self.start, self.end)
+    }
+}
+
+impl Debug for BytesRange {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "{}..{} ({})", self.start, self.end, self.total())
     }
 }
