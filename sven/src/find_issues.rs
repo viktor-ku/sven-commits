@@ -1,43 +1,13 @@
 use crate::{
     additive::Additive,
     at::{At, AtPos, AtTarget},
+    issue::{Issue, IssueData, IssueSubject, Missing},
     weak_commit::{
         parse_header::{Token, TokenKind},
         WeakCommit,
     },
 };
 use anyhow::Result;
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum Subject {
-    Type,
-    Header,
-    Colon,
-    Desc,
-    Whitespace,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct Missing {
-    pub id: usize,
-    pub subject: Subject,
-    pub expected_at: At,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub struct Misplaced {
-    pub subject: Subject,
-    /// nth byte, starting from 0
-    pub expected_at: usize,
-    /// nth byte, starting from 0
-    pub found_at: usize,
-}
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum Issue {
-    Missing(Missing),
-    Misplaced(Misplaced),
-}
 
 #[derive(Debug, Default)]
 pub struct Paper<'a> {
@@ -54,11 +24,13 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     let mut id = Additive::new();
 
     if tokens.is_empty() || (tokens.len() == 1 && tokens.first().unwrap().kind == TokenKind::EOL) {
-        issues.push(Issue::Missing(Missing {
+        issues.push(Issue {
             id: id.stamp(),
-            subject: Subject::Header,
-            expected_at: At::start(),
-        }));
+            subject: IssueSubject::Header,
+            data: IssueData::Missing(Missing {
+                expected_at: At::start(),
+            }),
+        });
         return;
     }
 
@@ -93,44 +65,52 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     println!("{:#?}", paper);
 
     if paper.type_pocket.is_none() {
-        issues.push(Issue::Missing(Missing {
+        issues.push(Issue {
             id: id.stamp(),
-            subject: Subject::Type,
-            expected_at: At {
-                pos: AtPos::After,
-                target: AtTarget::Root,
-            },
-        }));
+            subject: IssueSubject::Type,
+            data: IssueData::Missing(Missing {
+                expected_at: At {
+                    pos: AtPos::After,
+                    target: AtTarget::Root,
+                },
+            }),
+        });
     }
     if paper.colon_pocket.is_none() {
-        issues.push(Issue::Missing(Missing {
+        issues.push(Issue {
             id: id.stamp(),
-            subject: Subject::Colon,
-            expected_at: At {
-                pos: AtPos::After,
-                target: AtTarget::Token(paper.type_pocket.unwrap().id),
-            },
-        }));
+            subject: IssueSubject::Colon,
+            data: IssueData::Missing(Missing {
+                expected_at: At {
+                    pos: AtPos::After,
+                    target: AtTarget::Token(paper.type_pocket.unwrap().id),
+                },
+            }),
+        });
     }
     if paper.whitespace_pocket.is_none() {
-        issues.push(Issue::Missing(Missing {
+        issues.push(Issue {
             id: id.stamp(),
-            subject: Subject::Whitespace,
-            expected_at: At {
-                pos: AtPos::After,
-                target: AtTarget::Token(paper.colon_pocket.unwrap().id),
-            },
-        }));
+            subject: IssueSubject::Whitespace,
+            data: IssueData::Missing(Missing {
+                expected_at: At {
+                    pos: AtPos::After,
+                    target: AtTarget::Token(paper.colon_pocket.unwrap().id),
+                },
+            }),
+        });
     }
     if paper.desc_pocket.is_none() {
-        issues.push(Issue::Missing(Missing {
+        issues.push(Issue {
             id: id.stamp(),
-            subject: Subject::Desc,
-            expected_at: At {
-                pos: AtPos::After,
-                target: AtTarget::Issue(2),
-            },
-        }));
+            subject: IssueSubject::Desc,
+            data: IssueData::Missing(Missing {
+                expected_at: At {
+                    pos: AtPos::After,
+                    target: AtTarget::Issue(2),
+                },
+            }),
+        });
     }
 }
 
@@ -169,11 +149,13 @@ BREAKING CHANGE: supports many footers
     fn eol_no_header() {
         let commit = "\n";
         let actual = find_issues(commit).unwrap();
-        let expected = vec![Issue::Missing(Missing {
+        let expected = vec![Issue {
             id: 1,
-            subject: Subject::Header,
-            expected_at: At::start(),
-        })];
+            subject: IssueSubject::Header,
+            data: IssueData::Missing(Missing {
+                expected_at: At::start(),
+            }),
+        }];
         assert_eq!(actual, expected);
     }
 
@@ -181,11 +163,13 @@ BREAKING CHANGE: supports many footers
     fn empty_no_header() {
         let commit = "";
         let actual = find_issues(commit).unwrap();
-        let expected = vec![Issue::Missing(Missing {
+        let expected = vec![Issue {
             id: 1,
-            subject: Subject::Header,
-            expected_at: At::start(),
-        })];
+            subject: IssueSubject::Header,
+            data: IssueData::Missing(Missing {
+                expected_at: At::start(),
+            }),
+        }];
         assert_eq!(actual, expected);
     }
 
@@ -196,14 +180,16 @@ colon missing after the type "colon"
 "###
         .trim_start();
         let actual = find_issues(commit).unwrap();
-        let expected = vec![Issue::Missing(Missing {
+        let expected = vec![Issue {
             id: 1,
-            subject: Subject::Colon,
-            expected_at: At {
-                pos: AtPos::After,
-                target: AtTarget::Token(1),
-            },
-        })];
+            subject: IssueSubject::Colon,
+            data: IssueData::Missing(Missing {
+                expected_at: At {
+                    pos: AtPos::After,
+                    target: AtTarget::Token(1),
+                },
+            }),
+        }];
         assert_eq!(actual, expected);
     }
 
@@ -215,27 +201,33 @@ colon missing after the type "colon"
         .trim_start();
         let actual = find_issues(commit).unwrap();
         let expected = vec![
-            Issue::Missing(Missing {
+            Issue {
                 id: 1,
-                subject: Subject::Type,
-                expected_at: At::start(),
-            }),
-            Issue::Missing(Missing {
+                subject: IssueSubject::Type,
+                data: IssueData::Missing(Missing {
+                    expected_at: At::start(),
+                }),
+            },
+            Issue {
                 id: 2,
-                subject: Subject::Whitespace,
-                expected_at: At {
-                    pos: AtPos::After,
-                    target: AtTarget::Token(1),
-                },
-            }),
-            Issue::Missing(Missing {
+                subject: IssueSubject::Whitespace,
+                data: IssueData::Missing(Missing {
+                    expected_at: At {
+                        pos: AtPos::After,
+                        target: AtTarget::Token(1),
+                    },
+                }),
+            },
+            Issue {
                 id: 3,
-                subject: Subject::Desc,
-                expected_at: At {
-                    pos: AtPos::After,
-                    target: AtTarget::Issue(2),
-                },
-            }),
+                subject: IssueSubject::Desc,
+                data: IssueData::Missing(Missing {
+                    expected_at: At {
+                        pos: AtPos::After,
+                        target: AtTarget::Issue(2),
+                    },
+                }),
+            },
         ];
         assert_eq!(actual, expected);
     }

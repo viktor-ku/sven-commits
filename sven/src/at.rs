@@ -1,5 +1,3 @@
-use crate::{find_issues::Issue, weak_commit::parse_header::Token};
-
 #[derive(Debug, PartialEq, Eq)]
 pub enum AtPos {
     After,
