@@ -18,10 +18,27 @@ pub struct At {
 }
 
 impl At {
+    #[inline]
     pub fn start() -> Self {
         Self {
             pos: AtPos::After,
             target: AtTarget::Root,
+        }
+    }
+
+    #[inline]
+    pub fn after(target: AtTarget) -> Self {
+        Self {
+            pos: AtPos::After,
+            target,
+        }
+    }
+
+    #[inline]
+    pub fn before(target: AtTarget) -> Self {
+        Self {
+            pos: AtPos::Before,
+            target,
         }
     }
 }

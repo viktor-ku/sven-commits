@@ -181,12 +181,12 @@ mod rows {
         let actual = parse_header("eol\n").unwrap();
         let expected = vec![
             Token {
-                id: 1,
+                id: 0,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
             },
             Token {
-                id: 2,
+                id: 1,
                 kind: TokenKind::EOL,
                 bytes: BytesRange { start: 3, end: 4 },
             },
@@ -199,12 +199,12 @@ mod rows {
         let actual = parse_header(" space").unwrap();
         let expected = vec![
             Token {
-                id: 1,
+                id: 0,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 0, end: 1 },
             },
             Token {
-                id: 2,
+                id: 1,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 1, end: 6 },
             },
@@ -216,7 +216,7 @@ mod rows {
     fn one_word() {
         let actual = parse_header("fix").unwrap();
         let expected = vec![Token {
-            id: 1,
+            id: 0,
             kind: TokenKind::Seq,
             bytes: BytesRange { start: 0, end: 3 },
         }];
@@ -228,27 +228,27 @@ mod rows {
         let actual = parse_header("рад два три").unwrap();
         let expected = vec![
             Token {
-                id: 1,
+                id: 0,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 0, end: 6 },
             },
             Token {
-                id: 2,
+                id: 1,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 6, end: 7 },
             },
             Token {
-                id: 3,
+                id: 2,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 7, end: 13 },
             },
             Token {
-                id: 4,
+                id: 3,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 13, end: 14 },
             },
             Token {
-                id: 5,
+                id: 4,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 14, end: 20 },
             },
@@ -261,22 +261,22 @@ mod rows {
         let actual = parse_header("fix: me").unwrap();
         let expected = vec![
             Token {
-                id: 1,
+                id: 0,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
             },
             Token {
-                id: 2,
+                id: 1,
                 kind: TokenKind::Colon,
                 bytes: BytesRange { start: 3, end: 4 },
             },
             Token {
-                id: 3,
+                id: 2,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 4, end: 5 },
             },
             Token {
-                id: 4,
+                id: 3,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 5, end: 7 },
             },

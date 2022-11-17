@@ -9,7 +9,8 @@ impl Additive {
     }
 
     pub fn stamp(&mut self) -> usize {
+        let x = self.inner;
         self.inner += 1;
-        self.inner
+        x
     }
 }
