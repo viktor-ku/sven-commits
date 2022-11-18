@@ -15,8 +15,15 @@ pub struct Missing {
 }
 
 #[derive(Debug, PartialEq, Eq)]
+pub struct Misplaced {
+    pub expected_at: At,
+    pub found_at: At,
+}
+
+#[derive(Debug, PartialEq, Eq)]
 pub enum IssueData {
     Missing(Missing),
+    Misplaced(Misplaced),
 }
 
 #[derive(Debug, PartialEq, Eq)]

@@ -1,23 +1,13 @@
 use crate::{
     additive::Additive,
-    at::{At, AtPos, AtTarget},
-    issue::{Issue, IssueData, IssueSubject, Missing},
+    at::{At, AtTarget},
+    issue::{Issue, IssueData, IssueSubject, Misplaced, Missing},
     weak_commit::{
         parse_header::{Token, TokenKind},
         WeakCommit,
     },
 };
 use anyhow::Result;
-
-#[derive(Debug, Default)]
-pub struct Paper<'a> {
-    pub type_pocket: Option<&'a Token>,
-    pub scope_pocket: Option<&'a Token>,
-    pub breaking_pocket: Option<&'a Token>,
-    pub colon_pocket: Option<&'a Token>,
-    pub whitespace_pocket: Option<&'a Token>,
-    pub desc_pocket: Option<&'a Token>,
-}
 
 fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
     println!("{:#?}", tokens);
@@ -128,15 +118,28 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
         }
         None => todo!(),
     };
+
+    if let Some(type_pocket) = type_pocket {
+        if type_pocket.id == start {
+            issues.push(Issue {
+                id: id.stamp(),
+                subject: IssueSubject::Type,
+                data: IssueData::Misplaced(Misplaced {
+                    expected_at: At::start(),
+                    found_at: At::exactly_token(type_pocket.id),
+                }),
+            });
+        }
+    }
 }
 
 pub fn find_issues(commit: &str) -> Result<Vec<Issue>> {
     let weak_commit = WeakCommit::parse(commit)?;
-    let mut v = Vec::new();
+    let mut issues = Vec::new();
 
-    find_header_issues(&weak_commit.header, &mut v);
+    find_header_issues(&weak_commit.header, &mut issues);
 
-    Ok(v)
+    Ok(issues)
 }
 
 #[cfg(test)]
@@ -200,7 +203,7 @@ colon missing after the type "colon"
             id: 0,
             subject: IssueSubject::Colon,
             data: IssueData::Missing(Missing {
-                expected_at: At::after(AtTarget::Token(0)),
+                expected_at: At::after_token(0),
             }),
         }];
         assert_eq!(actual, expected);
@@ -227,14 +230,14 @@ colon missing after the type "colon"
                 id: 1,
                 subject: IssueSubject::Whitespace,
                 data: IssueData::Missing(Missing {
-                    expected_at: At::after(AtTarget::Token(0)),
+                    expected_at: At::after_token(0),
                 }),
             },
             Issue {
                 id: 2,
                 subject: IssueSubject::Desc,
                 data: IssueData::Missing(Missing {
-                    expected_at: At::after(AtTarget::Issue(1)),
+                    expected_at: At::after_issue(1),
                 }),
             },
         ];
@@ -261,7 +264,7 @@ colon missing after the type "colon"
                 id: 1,
                 subject: IssueSubject::Desc,
                 data: IssueData::Missing(Missing {
-                    expected_at: At::after(AtTarget::Token(1)),
+                    expected_at: At::after_token(1),
                 }),
             },
         ];
@@ -269,7 +272,7 @@ colon missing after the type "colon"
     }
 
     #[test]
-    fn whitespace() {
+    fn whitespace_only() {
         let commit = " \n";
         let actual = find_issues(commit).unwrap();
         let expected = vec![
@@ -284,17 +287,35 @@ colon missing after the type "colon"
                 id: 1,
                 subject: IssueSubject::Colon,
                 data: IssueData::Missing(Missing {
-                    expected_at: At::after(AtTarget::Issue(0)),
+                    expected_at: At::after_issue(0),
                 }),
             },
             Issue {
                 id: 2,
                 subject: IssueSubject::Desc,
                 data: IssueData::Missing(Missing {
-                    expected_at: At::after(AtTarget::Token(0)),
+                    expected_at: At::after_token(0),
                 }),
             },
         ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn no_type_otherwise_perfect() {
+        let commit = r###"
+: otherwise perfect commit
+"###
+        .trim_start();
+        let actual = find_issues(commit).unwrap();
+        let expected = vec![Issue {
+            id: 0,
+            subject: IssueSubject::Type,
+            data: IssueData::Misplaced(Misplaced {
+                expected_at: At::start(),
+                found_at: At::exactly_token(2),
+            }),
+        }];
         assert_eq!(actual, expected);
     }
 }
