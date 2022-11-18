@@ -1,7 +1,7 @@
 #[derive(Debug, PartialEq, Eq)]
 pub enum AtPos {
+    Exactly,
     After,
-    Before,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -27,6 +27,24 @@ impl At {
     }
 
     #[inline]
+    pub fn exactly(target: AtTarget) -> Self {
+        Self {
+            pos: AtPos::Exactly,
+            target,
+        }
+    }
+
+    #[inline]
+    pub fn exactly_token(id: usize) -> Self {
+        Self::exactly(AtTarget::Token(id))
+    }
+
+    #[inline]
+    pub fn exactly_issue(id: usize) -> Self {
+        Self::exactly(AtTarget::Issue(id))
+    }
+
+    #[inline]
     pub fn after(target: AtTarget) -> Self {
         Self {
             pos: AtPos::After,
@@ -35,10 +53,12 @@ impl At {
     }
 
     #[inline]
-    pub fn before(target: AtTarget) -> Self {
-        Self {
-            pos: AtPos::Before,
-            target,
-        }
+    pub fn after_token(id: usize) -> Self {
+        Self::after(AtTarget::Token(id))
+    }
+
+    #[inline]
+    pub fn after_issue(id: usize) -> Self {
+        Self::after(AtTarget::Issue(id))
     }
 }
