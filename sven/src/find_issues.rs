@@ -68,7 +68,14 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
             data: IssueData::Missing(Missing {
                 expected_at: At::after(match type_pocket {
                     Some(token) => AtTarget::Token(token.id),
-                    None => todo!(),
+                    None => {
+                        // we have no type token, so do we have other kinds of tokens? (todo!)
+                        // for now we assume we do not, so we check issues, or default to root
+                        match issues.last() {
+                            Some(issue) => AtTarget::Issue(issue.id),
+                            None => AtTarget::Root,
+                        }
+                    }
                 }),
             }),
         }),
@@ -119,13 +126,7 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
                 }
             }
         }
-        None => issues.push(Issue {
-            id: id.stamp(),
-            subject: IssueSubject::Desc,
-            data: IssueData::Missing(Missing {
-                expected_at: At::after(AtTarget::Issue(issues.last().unwrap().id)),
-            }),
-        }),
+        None => todo!(),
     };
 }
 
@@ -247,7 +248,6 @@ colon missing after the type "colon"
 # note there is an expected WHITESPACE (" ") character at the end of the header above
 "###
         .trim_start();
-        println!("{:#?}", commit);
         let actual = find_issues(commit).unwrap();
         let expected = vec![
             Issue {
@@ -262,6 +262,36 @@ colon missing after the type "colon"
                 subject: IssueSubject::Desc,
                 data: IssueData::Missing(Missing {
                     expected_at: At::after(AtTarget::Token(1)),
+                }),
+            },
+        ];
+        assert_eq!(actual, expected);
+    }
+
+    #[test]
+    fn whitespace() {
+        let commit = " \n";
+        let actual = find_issues(commit).unwrap();
+        let expected = vec![
+            Issue {
+                id: 0,
+                subject: IssueSubject::Type,
+                data: IssueData::Missing(Missing {
+                    expected_at: At::start(),
+                }),
+            },
+            Issue {
+                id: 1,
+                subject: IssueSubject::Colon,
+                data: IssueData::Missing(Missing {
+                    expected_at: At::after(AtTarget::Issue(0)),
+                }),
+            },
+            Issue {
+                id: 2,
+                subject: IssueSubject::Desc,
+                data: IssueData::Missing(Missing {
+                    expected_at: At::after(AtTarget::Token(0)),
                 }),
             },
         ];
