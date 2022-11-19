@@ -1,6 +1,6 @@
 use crate::{
     additive::Additive,
-    at::{At, AtTarget},
+    at::At,
     issue::{Issue, IssueData, IssueSubject, Misplaced, Missing},
     weak_commit::{
         parse_header::{Token, TokenKind},
@@ -9,13 +9,50 @@ use crate::{
 };
 use anyhow::Result;
 
-fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
-    println!("{:#?}", tokens);
-    let mut id = Additive::new();
+pub fn find_issues(commit: &str) -> Result<Vec<Issue>> {
+    let weak_commit = WeakCommit::parse(commit)?;
+    let mut issues = Vec::new();
 
-    if tokens.is_empty() || (tokens.len() == 1 && tokens.first().unwrap().kind == TokenKind::EOL) {
+    find_header_issues(&weak_commit.header, &mut issues);
+
+    Ok(issues)
+}
+
+fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
+    let paper_type = 0;
+    let paper_colon = 1;
+    let paper_whitespace = 2;
+    let paper_desc = 3;
+    let mut paper: [Option<usize>; 4] = [None; 4];
+
+    // find first occurences of every paper token, except the desc
+    for token in tokens {
+        match token.kind {
+            TokenKind::Seq => match paper[paper_type] {
+                Some(_) => {}
+                None => paper[paper_type] = Some(token.id),
+            },
+            TokenKind::Colon => match paper[paper_colon] {
+                Some(_) => {}
+                None => paper[paper_colon] = Some(token.id),
+            },
+            TokenKind::Whitespace => match paper[paper_whitespace] {
+                Some(_) => {}
+                None => paper[paper_whitespace] = Some(token.id),
+            },
+            _ => {}
+        }
+    }
+
+    // this is our first attempt at figuring out where the desc starts, that is
+    // after the at most far token we found + 1
+    paper[paper_desc] = paper.iter().flatten().max().map(|x| x + 1);
+
+    println!("paper {:?}", paper);
+
+    if paper == [None, None, None, None] {
         issues.push(Issue {
-            id: id.stamp(),
+            id: 0,
             subject: IssueSubject::Header,
             data: IssueData::Missing(Missing {
                 expected_at: At::start(),
@@ -24,122 +61,79 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
         return;
     }
 
-    // if we have at least something, we consider everything to be desc
-    let mut start = 0;
+    let mut id = Additive::new();
 
-    let type_pocket = tokens.iter().find(|&token| token.kind == TokenKind::Seq);
-
-    // if we find a seq we consider a type, then we push desc cursor, because type cannot be desc
-    match type_pocket {
-        Some(token) => {
-            start = token.id + 1;
-        }
-        None => issues.push(Issue {
+    if paper[paper_type].is_none() {
+        issues.push(Issue {
             id: id.stamp(),
             subject: IssueSubject::Type,
             data: IssueData::Missing(Missing {
-                expected_at: At::after(AtTarget::Root),
+                expected_at: At::start(),
             }),
-        }),
-    };
-
-    // now that we found a type, we are looking for a colon
-    let colon_pocket = tokens.iter().find(|&token| token.kind == TokenKind::Colon);
-
-    // if we find the colon then we also move the desc, since colon is not the desc
-    // (any colon or colon after seq?)
-    match colon_pocket {
-        Some(token) => {
-            start = token.id + 1;
-        }
-        None => issues.push(Issue {
+        });
+    }
+    if paper[paper_colon].is_none() {
+        issues.push(Issue {
             id: id.stamp(),
             subject: IssueSubject::Colon,
             data: IssueData::Missing(Missing {
-                expected_at: At::after(match type_pocket {
-                    Some(token) => AtTarget::Token(token.id),
-                    None => {
-                        // we have no type token, so do we have other kinds of tokens? (todo!)
-                        // for now we assume we do not, so we check issues, or default to root
-                        match issues.last() {
-                            Some(issue) => AtTarget::Issue(issue.id),
-                            None => AtTarget::Root,
-                        }
-                    }
-                }),
+                expected_at: match paper[paper_type] {
+                    Some(id) => At::after_token(id),
+                    None => match issues.last() {
+                        Some(issue) => At::after_issue(issue.id),
+                        None => unreachable!(),
+                    },
+                },
             }),
-        }),
+        });
     }
-
-    let whitespace_pocket = tokens
-        .iter()
-        .find(|&token| token.kind == TokenKind::Whitespace);
-
-    match whitespace_pocket {
-        Some(token) => {
-            start = token.id + 1;
-        }
-        None => issues.push(Issue {
+    if paper[paper_whitespace].is_none() {
+        issues.push(Issue {
             id: id.stamp(),
             subject: IssueSubject::Whitespace,
             data: IssueData::Missing(Missing {
-                expected_at: At::after(match colon_pocket {
-                    Some(token) => AtTarget::Token(token.id),
-                    None => todo!(),
-                }),
+                expected_at: match paper[paper_colon] {
+                    Some(id) => At::after_token(id),
+                    None => match issues.last() {
+                        Some(issue) => At::after_issue(issue.id),
+                        None => unreachable!(),
+                    },
+                },
             }),
-        }),
+        });
+    }
+    if paper[paper_desc].unwrap() == tokens.len() - 1 {
+        issues.push(Issue {
+            id: id.stamp(),
+            subject: IssueSubject::Desc,
+            data: IssueData::Missing(Missing {
+                expected_at: match paper[paper_whitespace] {
+                    Some(id) => At::after_token(id),
+                    None => match issues.last() {
+                        Some(issue) => At::after_issue(issue.id),
+                        None => unreachable!(),
+                    },
+                },
+            }),
+        });
     }
 
-    // by this point we've pushed the start as far as we could, so we expect to get
-    // pretty good idea of where exactly desc should start
-    //
-    // its only token can't be the EOL
-    let desc = tokens.get(start..);
-
-    println!("{:#?}", desc);
-
-    match desc {
-        Some(tokens) => {
-            if let Some(first) = tokens.first() {
-                if first.kind == TokenKind::EOL {
-                    issues.push(Issue {
-                        id: id.stamp(),
-                        subject: IssueSubject::Desc,
-                        data: IssueData::Missing(Missing {
-                            expected_at: At::after(match whitespace_pocket {
-                                Some(whitespace) => AtTarget::Token(whitespace.id),
-                                None => AtTarget::Issue(issues.last().unwrap().id),
-                            }),
-                        }),
-                    });
-                }
+    // it is mispalced if type comes after the colon
+    match (paper[paper_type], paper[paper_colon]) {
+        (Some(type_id), Some(colon_id)) => {
+            if type_id > colon_id {
+                issues.push(Issue {
+                    id: id.stamp(),
+                    subject: IssueSubject::Type,
+                    data: IssueData::Misplaced(Misplaced {
+                        expected_at: At::start(),
+                        found_at: At::exactly_token(tokens[paper[paper_type].unwrap()].id),
+                    }),
+                });
             }
         }
-        None => todo!(),
-    };
-
-    if let Some(type_pocket) = type_pocket {
-        if type_pocket.id == start {
-            issues.push(Issue {
-                id: id.stamp(),
-                subject: IssueSubject::Type,
-                data: IssueData::Misplaced(Misplaced {
-                    expected_at: At::start(),
-                    found_at: At::exactly_token(type_pocket.id),
-                }),
-            });
-        }
+        _ => {}
     }
-}
-
-pub fn find_issues(commit: &str) -> Result<Vec<Issue>> {
-    let weak_commit = WeakCommit::parse(commit)?;
-    let mut issues = Vec::new();
-
-    find_header_issues(&weak_commit.header, &mut issues);
-
-    Ok(issues)
 }
 
 #[cfg(test)]
@@ -160,6 +154,7 @@ Refs: #1001
 BREAKING CHANGE: supports many footers
 "###
         .trim_start();
+        println!("commit {:?}", commit);
         let actual = find_issues(commit).unwrap();
         assert_eq!(actual, Vec::new());
     }
@@ -167,6 +162,7 @@ BREAKING CHANGE: supports many footers
     #[test]
     fn eol_no_header() {
         let commit = "\n";
+        println!("commit {}", commit);
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue {
             id: 0,
@@ -181,6 +177,7 @@ BREAKING CHANGE: supports many footers
     #[test]
     fn empty_no_header() {
         let commit = "";
+        println!("commit {:?}", commit);
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue {
             id: 0,
@@ -198,6 +195,7 @@ BREAKING CHANGE: supports many footers
 colon missing after the type "colon"
 "###
         .trim_start();
+        println!("commit {:?}", commit);
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue {
             id: 0,
@@ -217,6 +215,7 @@ colon missing after the type "colon"
 # no desc (because no tokens where desc should have started, although initially desc is everything)
 "###
         .trim_start();
+        println!("commit {:?}", commit);
         let actual = find_issues(commit).unwrap();
         let expected = vec![
             Issue {
@@ -251,6 +250,7 @@ colon missing after the type "colon"
 # note there is an expected WHITESPACE (" ") character at the end of the header above
 "###
         .trim_start();
+        println!("commit {:?}", commit);
         let actual = find_issues(commit).unwrap();
         let expected = vec![
             Issue {
@@ -274,6 +274,7 @@ colon missing after the type "colon"
     #[test]
     fn whitespace_only() {
         let commit = " \n";
+        println!("commit {:?}", commit);
         let actual = find_issues(commit).unwrap();
         let expected = vec![
             Issue {
@@ -307,6 +308,7 @@ colon missing after the type "colon"
 : otherwise perfect commit
 "###
         .trim_start();
+        println!("commit {:?}", commit);
         let actual = find_issues(commit).unwrap();
         let expected = vec![Issue {
             id: 0,
