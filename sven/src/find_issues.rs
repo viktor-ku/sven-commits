@@ -302,22 +302,68 @@ colon missing after the type "colon"
         assert_eq!(actual, expected);
     }
 
-    #[test]
-    fn no_type_otherwise_perfect() {
-        let commit = r###"
+    mod misplaced {
+        use super::*;
+
+        mod types {
+            use super::*;
+            use pretty_assertions::assert_eq;
+
+            #[test]
+            fn after_colon() {
+                let commit = r###"
+:otherwise desc
+"###
+                .trim_start();
+                println!("commit {:?}", commit);
+                let actual = find_issues(commit).unwrap();
+                for issue in actual {
+                    if issue.subject == IssueSubject::Type {
+                        match issue.data {
+                            IssueData::Misplaced(misplaced) => {
+                                assert_eq!(
+                                    misplaced,
+                                    Misplaced {
+                                        expected_at: At::start(),
+                                        found_at: At::exactly_token(1),
+                                    }
+                                );
+                                return;
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                panic!("did not find expected issue")
+            }
+
+            #[test]
+            fn after_whitespace() {
+                let commit = r###"
 : otherwise perfect commit
 "###
-        .trim_start();
-        println!("commit {:?}", commit);
-        let actual = find_issues(commit).unwrap();
-        let expected = vec![Issue {
-            id: 0,
-            subject: IssueSubject::Type,
-            data: IssueData::Misplaced(Misplaced {
-                expected_at: At::start(),
-                found_at: At::exactly_token(2),
-            }),
-        }];
-        assert_eq!(actual, expected);
+                .trim_start();
+                println!("commit {:?}", commit);
+                let actual = find_issues(commit).unwrap();
+                for issue in actual {
+                    if issue.subject == IssueSubject::Type {
+                        match issue.data {
+                            IssueData::Misplaced(misplaced) => {
+                                assert_eq!(
+                                    misplaced,
+                                    Misplaced {
+                                        expected_at: At::start(),
+                                        found_at: At::exactly_token(2),
+                                    }
+                                );
+                                return;
+                            }
+                            _ => {}
+                        }
+                    }
+                }
+                panic!("did not find expected issue")
+            }
+        }
     }
 }
