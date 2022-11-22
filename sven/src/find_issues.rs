@@ -2,6 +2,7 @@ use crate::{
     additive::Additive,
     at::At,
     issue::{Issue, IssueData, IssueSubject, Misplaced, Missing},
+    paper::Paper,
     weak_commit::{
         parse_header::{Token, TokenKind},
         WeakCommit,
@@ -19,26 +20,23 @@ pub fn find_issues(commit: &str) -> Result<Vec<Issue>> {
 }
 
 fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
-    let paper_type = 0;
-    let paper_colon = 1;
-    let paper_whitespace = 2;
-    let paper_desc = 3;
-    let mut paper: [Option<usize>; 4] = [None; 4];
+    println!("tokens {:#?}", tokens);
+    let mut paper = Paper::new();
 
     // find first occurences of every paper token, except the desc
     for token in tokens {
         match token.kind {
-            TokenKind::Seq => match paper[paper_type] {
+            TokenKind::Seq => match paper.type_id {
                 Some(_) => {}
-                None => paper[paper_type] = Some(token.id),
+                None => paper.type_id = Some(token.id),
             },
-            TokenKind::Colon => match paper[paper_colon] {
+            TokenKind::Colon => match paper.colon_id {
                 Some(_) => {}
-                None => paper[paper_colon] = Some(token.id),
+                None => paper.colon_id = Some(token.id),
             },
-            TokenKind::Whitespace => match paper[paper_whitespace] {
+            TokenKind::Whitespace => match paper.space_id {
                 Some(_) => {}
-                None => paper[paper_whitespace] = Some(token.id),
+                None => paper.space_id = Some(token.id),
             },
             _ => {}
         }
@@ -46,11 +44,15 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
 
     // this is our first attempt at figuring out where the desc starts, that is
     // after the at most far token we found + 1
-    paper[paper_desc] = paper.iter().flatten().max().map(|x| x + 1);
+    paper.desc_id = [paper.type_id, paper.colon_id, paper.space_id, paper.desc_id]
+        .iter()
+        .flatten()
+        .max()
+        .map(|x| x + 1);
 
-    println!("paper {:?}", paper);
+    println!("{:?}", paper);
 
-    if paper == [None, None, None, None] {
+    if paper.is_empty() {
         issues.push(Issue {
             id: 0,
             subject: IssueSubject::Header,
@@ -63,7 +65,7 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
 
     let mut id = Additive::new();
 
-    if paper[paper_type].is_none() {
+    if paper.type_id.is_none() {
         issues.push(Issue {
             id: id.stamp(),
             subject: IssueSubject::Type,
@@ -72,12 +74,12 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
             }),
         });
     }
-    if paper[paper_colon].is_none() {
+    if paper.colon_id.is_none() {
         issues.push(Issue {
             id: id.stamp(),
             subject: IssueSubject::Colon,
             data: IssueData::Missing(Missing {
-                expected_at: match paper[paper_type] {
+                expected_at: match paper.type_id {
                     Some(id) => At::after_token(id),
                     None => match issues.last() {
                         Some(issue) => At::after_issue(issue.id),
@@ -87,12 +89,12 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
             }),
         });
     }
-    if paper[paper_whitespace].is_none() {
+    if paper.space_id.is_none() {
         issues.push(Issue {
             id: id.stamp(),
             subject: IssueSubject::Whitespace,
             data: IssueData::Missing(Missing {
-                expected_at: match paper[paper_colon] {
+                expected_at: match paper.colon_id {
                     Some(id) => At::after_token(id),
                     None => match issues.last() {
                         Some(issue) => At::after_issue(issue.id),
@@ -102,12 +104,12 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
             }),
         });
     }
-    if paper[paper_desc].unwrap() == tokens.len() - 1 {
+    if paper.desc_id.unwrap() == tokens.len() - 1 {
         issues.push(Issue {
             id: id.stamp(),
             subject: IssueSubject::Desc,
             data: IssueData::Missing(Missing {
-                expected_at: match paper[paper_whitespace] {
+                expected_at: match paper.space_id {
                     Some(id) => At::after_token(id),
                     None => match issues.last() {
                         Some(issue) => At::after_issue(issue.id),
@@ -118,7 +120,7 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
         });
     }
 
-    match (paper[paper_type], paper[paper_colon]) {
+    match (paper.type_id, paper.colon_id) {
         (Some(type_id), Some(colon_id)) => {
             debug_assert!(type_id != colon_id);
 
@@ -128,7 +130,7 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
                     subject: IssueSubject::Type,
                     data: IssueData::Misplaced(Misplaced {
                         expected_at: At::start(),
-                        found_at: At::exactly_token(tokens[paper[paper_type].unwrap()].id),
+                        found_at: At::exactly_token(tokens[paper.type_id.unwrap()].id),
                     }),
                 });
                 issues.push(Issue {
@@ -144,16 +146,16 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
         _ => {}
     }
 
-    match (paper[paper_colon], paper[paper_whitespace]) {
-        (Some(colon_id), Some(whitespace_id)) => {
-            debug_assert!(colon_id != whitespace_id);
+    match (paper.colon_id, paper.space_id) {
+        (Some(colon_id), Some(space_id)) => {
+            debug_assert!(colon_id != space_id);
 
-            if colon_id > whitespace_id {
+            if colon_id > space_id {
                 issues.push(Issue {
                     id: id.stamp(),
                     subject: IssueSubject::Colon,
                     data: IssueData::Misplaced(Misplaced {
-                        expected_at: At::after_token(paper_type),
+                        expected_at: At::after_token(todo!()),
                         found_at: At::exactly_token(colon_id),
                     }),
                 });
@@ -427,6 +429,21 @@ type :desc?
                     IssueData::Misplaced(Misplaced {
                         expected_at: At::after_token(0),
                         found_at: At::exactly_token(2),
+                    }),
+                );
+            }
+
+            #[test]
+            fn after_whitespace_spaced() {
+                let commit = " type :desc?\n";
+                println!("commit {:?}", commit);
+                let actual = find_issues(commit).unwrap();
+                assert_misplaced(
+                    &actual,
+                    IssueSubject::Colon,
+                    IssueData::Misplaced(Misplaced {
+                        expected_at: At::after_token(1),
+                        found_at: At::exactly_token(3),
                     }),
                 );
             }

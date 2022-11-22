@@ -7,6 +7,7 @@ mod find_issues;
 mod weak_commit;
 mod at;
 mod issue;
+mod paper;
 
 fn main() {
     println!("Hello, world!");
