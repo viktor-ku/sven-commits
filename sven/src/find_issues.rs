@@ -118,9 +118,10 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
         });
     }
 
-    // it is mispalced if type comes after the colon
     match (paper[paper_type], paper[paper_colon]) {
         (Some(type_id), Some(colon_id)) => {
+            debug_assert!(type_id != colon_id);
+
             if type_id > colon_id {
                 issues.push(Issue {
                     id: id.stamp(),
@@ -128,6 +129,32 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
                     data: IssueData::Misplaced(Misplaced {
                         expected_at: At::start(),
                         found_at: At::exactly_token(tokens[paper[paper_type].unwrap()].id),
+                    }),
+                });
+                issues.push(Issue {
+                    id: id.stamp(),
+                    subject: IssueSubject::Colon,
+                    data: IssueData::Misplaced(Misplaced {
+                        expected_at: At::after_token(type_id),
+                        found_at: At::start(),
+                    }),
+                });
+            }
+        }
+        _ => {}
+    }
+
+    match (paper[paper_colon], paper[paper_whitespace]) {
+        (Some(colon_id), Some(whitespace_id)) => {
+            debug_assert!(colon_id != whitespace_id);
+
+            if colon_id > whitespace_id {
+                issues.push(Issue {
+                    id: id.stamp(),
+                    subject: IssueSubject::Colon,
+                    data: IssueData::Misplaced(Misplaced {
+                        expected_at: At::after_token(paper_type),
+                        found_at: At::exactly_token(colon_id),
                     }),
                 });
             }
@@ -304,10 +331,29 @@ colon missing after the type "colon"
 
     mod misplaced {
         use super::*;
+        use pretty_assertions::assert_eq;
+
+        #[inline]
+        fn assert_misplaced(issues: &[Issue], subject: IssueSubject, data: IssueData) {
+            match issues.iter().find(|&issue| {
+                issue.subject == subject
+                    && match (issue.data, data) {
+                        (IssueData::Misplaced { .. }, IssueData::Misplaced { .. }) => true,
+                        _ => false,
+                    }
+            }) {
+                Some(actual) => {
+                    assert_eq!(actual.subject, subject);
+                    assert_eq!(actual.data, data);
+                }
+                None => {
+                    panic!("could not find an expected issue");
+                }
+            }
+        }
 
         mod types {
             use super::*;
-            use pretty_assertions::assert_eq;
 
             #[test]
             fn after_colon() {
@@ -317,24 +363,14 @@ colon missing after the type "colon"
                 .trim_start();
                 println!("commit {:?}", commit);
                 let actual = find_issues(commit).unwrap();
-                for issue in actual {
-                    if issue.subject == IssueSubject::Type {
-                        match issue.data {
-                            IssueData::Misplaced(misplaced) => {
-                                assert_eq!(
-                                    misplaced,
-                                    Misplaced {
-                                        expected_at: At::start(),
-                                        found_at: At::exactly_token(1),
-                                    }
-                                );
-                                return;
-                            }
-                            _ => {}
-                        }
-                    }
-                }
-                panic!("did not find expected issue")
+                assert_misplaced(
+                    &actual,
+                    IssueSubject::Type,
+                    IssueData::Misplaced(Misplaced {
+                        expected_at: At::start(),
+                        found_at: At::exactly_token(1),
+                    }),
+                );
             }
 
             #[test]
@@ -345,24 +381,54 @@ colon missing after the type "colon"
                 .trim_start();
                 println!("commit {:?}", commit);
                 let actual = find_issues(commit).unwrap();
-                for issue in actual {
-                    if issue.subject == IssueSubject::Type {
-                        match issue.data {
-                            IssueData::Misplaced(misplaced) => {
-                                assert_eq!(
-                                    misplaced,
-                                    Misplaced {
-                                        expected_at: At::start(),
-                                        found_at: At::exactly_token(2),
-                                    }
-                                );
-                                return;
-                            }
-                            _ => {}
-                        }
-                    }
-                }
-                panic!("did not find expected issue")
+                assert_misplaced(
+                    &actual,
+                    IssueSubject::Type,
+                    IssueData::Misplaced(Misplaced {
+                        expected_at: At::start(),
+                        found_at: At::exactly_token(2),
+                    }),
+                );
+            }
+        }
+
+        mod colon {
+            use super::*;
+
+            #[test]
+            fn before_type() {
+                let commit = r###"
+:before type clearly
+"###
+                .trim_start();
+                println!("commit {:?}", commit);
+                let actual = find_issues(commit).unwrap();
+                assert_misplaced(
+                    &actual,
+                    IssueSubject::Colon,
+                    IssueData::Misplaced(Misplaced {
+                        expected_at: At::after_token(1),
+                        found_at: At::start(),
+                    }),
+                );
+            }
+
+            #[test]
+            fn after_whitespace() {
+                let commit = r###"
+type :desc?
+"###
+                .trim_start();
+                println!("commit {:?}", commit);
+                let actual = find_issues(commit).unwrap();
+                assert_misplaced(
+                    &actual,
+                    IssueSubject::Colon,
+                    IssueData::Misplaced(Misplaced {
+                        expected_at: At::after_token(0),
+                        found_at: At::exactly_token(2),
+                    }),
+                );
             }
         }
     }
