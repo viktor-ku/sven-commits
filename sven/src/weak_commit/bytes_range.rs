@@ -26,6 +26,20 @@ impl Into<(usize, usize)> for BytesRange {
 
 impl Debug for BytesRange {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}..{} ({})", self.start, self.end, self.total())
+        write!(f, "{}", self.start)?;
+
+        if self.start < 10 {
+            write!(f, ".")?;
+        }
+
+        write!(f, "..")?;
+
+        if self.end < 10 {
+            write!(f, ".")?;
+        }
+
+        write!(f, "{}", self.end)?;
+
+        write!(f, " ({})", self.total())
     }
 }

@@ -1,15 +1,17 @@
-use std::fmt::Debug;
-
 use super::{bytes_range::BytesRange, CRule, CommitParser};
 use crate::additive::Additive;
 use anyhow::Result;
 use pest::Parser;
+use std::fmt::Debug;
 
 #[derive(PartialEq, Eq)]
 pub struct Token {
     pub id: usize,
     pub kind: TokenKind,
     pub bytes: BytesRange,
+
+    #[cfg(debug_assertions)]
+    pub source: String,
 }
 
 impl Token {
@@ -31,16 +33,29 @@ impl Into<(usize, usize)> for Token {
     }
 }
 
+#[cfg(debug_assertions)]
 impl Debug for Token {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let kind_string = {
+        let kind = {
             let kind_str = self.kind.stringify();
             let len = kind_str.len();
             let diff = 10 - len;
             format!("{:?}{}", self.kind, " ".repeat(diff))
         };
 
-        write!(f, "{} {} {:?}", self.id, kind_string, self.bytes)
+        write!(
+            f,
+            "{} {} {:?} \"{}\"",
+            self.id,
+            kind,
+            self.bytes,
+            match self.kind {
+                TokenKind::EOL => {
+                    "\\n"
+                }
+                _ => self.capture(&self.source),
+            }
+        )
     }
 }
 
@@ -98,6 +113,8 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                                         start: span.start() - word_bytes,
                                         end: span.end() - 1,
                                     },
+                                    #[cfg(debug_assertions)]
+                                    source: header.to_string(),
                                 });
                                 word_bytes = 0;
                             }
@@ -113,6 +130,8 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                #[cfg(debug_assertions)]
+                                source: header.to_string(),
                             });
                         }
                         CRule::TokenCloseBracket => {
@@ -123,6 +142,8 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                #[cfg(debug_assertions)]
+                                source: header.to_string(),
                             });
                         }
                         CRule::TokenExclMark => {
@@ -133,6 +154,8 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                #[cfg(debug_assertions)]
+                                source: header.to_string(),
                             });
                         }
                         CRule::TokenColon => {
@@ -143,6 +166,8 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                #[cfg(debug_assertions)]
+                                source: header.to_string(),
                             });
                         }
                         CRule::TokenWhitespace => {
@@ -153,6 +178,8 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                #[cfg(debug_assertions)]
+                                source: header.to_string(),
                             });
                         }
                         CRule::TokenEOL => {
@@ -163,6 +190,8 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                #[cfg(debug_assertions)]
+                                source: header.to_string(),
                             });
                         }
                         _ => {}
@@ -184,6 +213,8 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                         start: token.bytes.end,
                         end: token.bytes.end + word_bytes,
                     },
+                    #[cfg(debug_assertions)]
+                    source: header.to_string(),
                 });
             }
             None => v.push(Token {
@@ -193,6 +224,8 @@ pub fn parse_header(header: &str) -> Result<Vec<Token>> {
                     start: 0,
                     end: word_bytes,
                 },
+                #[cfg(debug_assertions)]
+                source: header.to_string(),
             }),
         }
     }
@@ -207,17 +240,20 @@ mod rows {
 
     #[test]
     fn ends_with_eol() {
-        let actual = parse_header("eol\n").unwrap();
+        let source = String::from("eol\n");
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Token {
                 id: 0,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
+                source: source.clone(),
             },
             Token {
                 id: 1,
                 kind: TokenKind::EOL,
                 bytes: BytesRange { start: 3, end: 4 },
+                source: source.clone(),
             },
         ];
         assert_eq!(actual, expected);
@@ -225,17 +261,20 @@ mod rows {
 
     #[test]
     fn space_at_the_start_valid_next_word_align() {
-        let actual = parse_header(" space").unwrap();
+        let source = String::from(" space");
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Token {
                 id: 0,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 0, end: 1 },
+                source: source.clone(),
             },
             Token {
                 id: 1,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 1, end: 6 },
+                source: source.clone(),
             },
         ];
         assert_eq!(actual, expected);
@@ -243,43 +282,51 @@ mod rows {
 
     #[test]
     fn one_word() {
-        let actual = parse_header("fix").unwrap();
+        let source = String::from("fix");
+        let actual = parse_header(&source).unwrap();
         let expected = vec![Token {
             id: 0,
             kind: TokenKind::Seq,
             bytes: BytesRange { start: 0, end: 3 },
+            source: source.clone(),
         }];
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn some_string_utf8() {
-        let actual = parse_header("рад два три").unwrap();
+        let source = String::from("рад два три");
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Token {
                 id: 0,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 0, end: 6 },
+                source: source.clone(),
             },
             Token {
                 id: 1,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 6, end: 7 },
+                source: source.clone(),
             },
             Token {
                 id: 2,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 7, end: 13 },
+                source: source.clone(),
             },
             Token {
                 id: 3,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 13, end: 14 },
+                source: source.clone(),
             },
             Token {
                 id: 4,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 14, end: 20 },
+                source: source.clone(),
             },
         ];
         assert_eq!(actual, expected);
@@ -287,27 +334,32 @@ mod rows {
 
     #[test]
     fn working_commit() {
-        let actual = parse_header("fix: me").unwrap();
+        let source = String::from("fix: me");
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Token {
                 id: 0,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
+                source: source.clone(),
             },
             Token {
                 id: 1,
                 kind: TokenKind::Colon,
                 bytes: BytesRange { start: 3, end: 4 },
+                source: source.clone(),
             },
             Token {
                 id: 2,
                 kind: TokenKind::Whitespace,
                 bytes: BytesRange { start: 4, end: 5 },
+                source: source.clone(),
             },
             Token {
                 id: 3,
                 kind: TokenKind::Seq,
                 bytes: BytesRange { start: 5, end: 7 },
+                source: source.clone(),
             },
         ];
         assert_eq!(actual, expected);
