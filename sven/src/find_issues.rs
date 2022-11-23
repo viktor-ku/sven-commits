@@ -188,147 +188,166 @@ BREAKING CHANGE: supports many footers
         assert_eq!(actual, Vec::new());
     }
 
-    #[test]
-    fn eol_no_header() {
-        let commit = "\n";
-        println!("commit {}", commit);
-        let actual = find_issues(commit).unwrap();
-        let expected = vec![Issue {
-            id: 0,
-            subject: IssueSubject::Header,
-            data: IssueData::Missing(Missing {
-                expected_at: At::start(),
-            }),
-        }];
-        assert_eq!(actual, expected);
+    mod no_header {
+        use super::*;
+        use pretty_assertions::assert_eq;
+
+        #[test]
+        fn only_eol() {
+            let commit = "\n";
+            println!("commit {}", commit);
+            let actual = find_issues(commit).unwrap();
+            let expected = vec![Issue {
+                id: 0,
+                subject: IssueSubject::Header,
+                data: IssueData::Missing(Missing {
+                    expected_at: At::start(),
+                }),
+            }];
+            assert_eq!(actual, expected);
+        }
+
+        #[test]
+        fn completely_empty() {
+            let commit = "";
+            println!("commit {:?}", commit);
+            let actual = find_issues(commit).unwrap();
+            let expected = vec![Issue {
+                id: 0,
+                subject: IssueSubject::Header,
+                data: IssueData::Missing(Missing {
+                    expected_at: At::start(),
+                }),
+            }];
+            assert_eq!(actual, expected);
+        }
     }
 
-    #[test]
-    fn empty_no_header() {
-        let commit = "";
-        println!("commit {:?}", commit);
-        let actual = find_issues(commit).unwrap();
-        let expected = vec![Issue {
-            id: 0,
-            subject: IssueSubject::Header,
-            data: IssueData::Missing(Missing {
-                expected_at: At::start(),
-            }),
-        }];
-        assert_eq!(actual, expected);
-    }
+    mod missing {
+        use super::*;
+        use pretty_assertions::assert_eq;
 
-    #[test]
-    fn consider_first_ever_word_to_be_the_type() {
-        let commit = r###"
+        #[inline]
+        fn assert_missing(issues: &[Issue], subject: IssueSubject, data: IssueData) {
+            match issues.iter().find(|&issue| {
+                issue.subject == subject
+                    && match (issue.data, data) {
+                        (IssueData::Missing { .. }, IssueData::Missing { .. }) => true,
+                        _ => false,
+                    }
+            }) {
+                Some(actual) => {
+                    assert_eq!(actual.subject, subject);
+                    assert_eq!(actual.data, data);
+                }
+                None => {
+                    panic!("could not find an expected issue");
+                }
+            }
+        }
+
+        #[test]
+        fn colon_after_type() {
+            let commit = r###"
 colon missing after the type "colon"
 "###
-        .trim_start();
-        println!("commit {:?}", commit);
-        let actual = find_issues(commit).unwrap();
-        let expected = vec![Issue {
-            id: 0,
-            subject: IssueSubject::Colon,
-            data: IssueData::Missing(Missing {
-                expected_at: At::after_token(0),
-            }),
-        }];
-        assert_eq!(actual, expected);
-    }
+            .trim_start();
+            println!("commit {:?}", commit);
+            let actual = find_issues(commit).unwrap();
+            assert_missing(
+                &actual,
+                IssueSubject::Colon,
+                IssueData::Missing(Missing {
+                    expected_at: At::after_token(0),
+                }),
+            );
+        }
 
-    #[test]
-    fn missing_type_and_desc_if_only_colon() {
-        let commit = r###"
+        #[test]
+        fn all_but_colon() {
+            let commit = r###"
 :
 # no type (no seq at all anywhere)
 # no desc (because no tokens where desc should have started, although initially desc is everything)
 "###
-        .trim_start();
-        println!("commit {:?}", commit);
-        let actual = find_issues(commit).unwrap();
-        let expected = vec![
-            Issue {
-                id: 0,
-                subject: IssueSubject::Type,
-                data: IssueData::Missing(Missing {
+            .trim_start();
+            println!("commit {:?}", commit);
+            let actual = find_issues(commit).unwrap();
+            assert_missing(
+                &actual,
+                IssueSubject::Type,
+                IssueData::Missing(Missing {
                     expected_at: At::start(),
                 }),
-            },
-            Issue {
-                id: 1,
-                subject: IssueSubject::Whitespace,
-                data: IssueData::Missing(Missing {
+            );
+            assert_missing(
+                &actual,
+                IssueSubject::Whitespace,
+                IssueData::Missing(Missing {
                     expected_at: At::after_token(0),
                 }),
-            },
-            Issue {
-                id: 2,
-                subject: IssueSubject::Desc,
-                data: IssueData::Missing(Missing {
+            );
+            assert_missing(
+                &actual,
+                IssueSubject::Desc,
+                IssueData::Missing(Missing {
                     expected_at: At::after_issue(1),
                 }),
-            },
-        ];
-        assert_eq!(actual, expected);
-    }
+            );
+        }
 
-    #[test]
-    fn missing_type_and_desc_when_nothing_after_colon_then_whitespace() {
-        let commit = r###"
+        #[test]
+        fn type_desc() {
+            let commit = r###"
 : 
 # note there is an expected WHITESPACE (" ") character at the end of the header above
 "###
-        .trim_start();
-        println!("commit {:?}", commit);
-        let actual = find_issues(commit).unwrap();
-        let expected = vec![
-            Issue {
-                id: 0,
-                subject: IssueSubject::Type,
-                data: IssueData::Missing(Missing {
+            .trim_start();
+            println!("commit {:?}", commit);
+            let actual = find_issues(commit).unwrap();
+            assert_missing(
+                &actual,
+                IssueSubject::Type,
+                IssueData::Missing(Missing {
                     expected_at: At::start(),
                 }),
-            },
-            Issue {
-                id: 1,
-                subject: IssueSubject::Desc,
-                data: IssueData::Missing(Missing {
+            );
+            assert_missing(
+                &actual,
+                IssueSubject::Desc,
+                IssueData::Missing(Missing {
                     expected_at: At::after_token(1),
                 }),
-            },
-        ];
-        assert_eq!(actual, expected);
-    }
+            );
+        }
 
-    #[test]
-    fn whitespace_only() {
-        let commit = " \n";
-        println!("commit {:?}", commit);
-        let actual = find_issues(commit).unwrap();
-        let expected = vec![
-            Issue {
-                id: 0,
-                subject: IssueSubject::Type,
-                data: IssueData::Missing(Missing {
+        #[test]
+        fn all_but_space() {
+            let commit = " \n";
+            println!("commit {:?}", commit);
+            let actual = find_issues(commit).unwrap();
+            assert_missing(
+                &actual,
+                IssueSubject::Type,
+                IssueData::Missing(Missing {
                     expected_at: At::start(),
                 }),
-            },
-            Issue {
-                id: 1,
-                subject: IssueSubject::Colon,
-                data: IssueData::Missing(Missing {
+            );
+            assert_missing(
+                &actual,
+                IssueSubject::Colon,
+                IssueData::Missing(Missing {
                     expected_at: At::after_issue(0),
                 }),
-            },
-            Issue {
-                id: 2,
-                subject: IssueSubject::Desc,
-                data: IssueData::Missing(Missing {
+            );
+            assert_missing(
+                &actual,
+                IssueSubject::Desc,
+                IssueData::Missing(Missing {
                     expected_at: At::after_token(0),
                 }),
-            },
-        ];
-        assert_eq!(actual, expected);
+            );
+        }
     }
 
     mod misplaced {

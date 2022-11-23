@@ -1,5 +1,6 @@
 use std::fmt::Debug;
 
+#[derive(PartialEq, Eq)]
 pub struct Paper {
     pub type_id: Option<usize>,
     pub colon_id: Option<usize>,
@@ -19,10 +20,12 @@ impl Paper {
 
     #[inline]
     pub fn is_empty(&self) -> bool {
-        self.type_id.is_none()
-            && self.colon_id.is_none()
-            && self.space_id.is_none()
-            && self.desc_id.is_none()
+        *self == Self {
+            type_id: None,
+            colon_id: None,
+            space_id: None,
+            desc_id: None,
+        }
     }
 }
 
