@@ -1,9 +1,11 @@
+use std::fmt::Debug;
+
 use super::{bytes_range::BytesRange, CRule, CommitParser};
 use crate::additive::Additive;
 use anyhow::Result;
 use pest::Parser;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct Token {
     pub id: usize,
     pub kind: TokenKind,
@@ -29,6 +31,19 @@ impl Into<(usize, usize)> for Token {
     }
 }
 
+impl Debug for Token {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        let kind_string = {
+            let kind_str = self.kind.stringify();
+            let len = kind_str.len();
+            let diff = 10 - len;
+            format!("{:?}{}", self.kind, " ".repeat(diff))
+        };
+
+        write!(f, "{} {} {:?}", self.id, kind_string, self.bytes)
+    }
+}
+
 #[derive(Debug, PartialEq, Eq)]
 pub enum TokenKind {
     /// Any sequence of any utf8 characters, excluding other kinds of token
@@ -39,6 +54,20 @@ pub enum TokenKind {
     ExclMark,
     Colon,
     EOL,
+}
+
+impl TokenKind {
+    pub fn stringify<'a>(&self) -> &'a str {
+        match self {
+            TokenKind::Seq => "Seq",
+            TokenKind::Whitespace => "Whitespace",
+            TokenKind::OpenBracket => "OpenBracket",
+            TokenKind::CloseBracket => "CloseBracket",
+            TokenKind::ExclMark => "ExclMark",
+            TokenKind::Colon => "Colon",
+            TokenKind::EOL => "EOL",
+        }
+    }
 }
 
 pub fn parse_header(header: &str) -> Result<Vec<Token>> {
