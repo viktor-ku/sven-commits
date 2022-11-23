@@ -43,10 +43,15 @@ impl Debug for Token {
             format!("{:?}{}", self.kind, " ".repeat(diff))
         };
 
+        if self.id < 10 {
+            write!(f, " ")?;
+        }
+        write!(f, "{}", self.id)?;
+        write!(f, " ")?;
+
         write!(
             f,
-            "{} {} {:?} \"{}\"",
-            self.id,
+            "{} {:?} \"{}\"",
             kind,
             self.bytes,
             match self.kind {
