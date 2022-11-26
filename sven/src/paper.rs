@@ -11,38 +11,45 @@ pub struct Paper {
 }
 
 impl Paper {
+    const ID_ROOT: usize = 0;
+    const ID_KIND: usize = 1;
+    const ID_COLON: usize = 2;
+    const ID_SPACE: usize = 3;
+    const ID_DESC: usize = 4;
+
+    #[inline]
     pub fn new() -> Self {
         Self {
             root: Pencil {
-                id: 0,
+                id: Self::ID_ROOT,
                 subject: Subject::Root,
                 found_at: None,
                 next: None,
                 prev: None,
             },
             kind: Pencil {
-                id: 1,
+                id: Self::ID_KIND,
                 subject: Subject::Kind,
                 found_at: None,
                 next: None,
                 prev: None,
             },
             colon: Pencil {
-                id: 2,
+                id: Self::ID_COLON,
                 subject: Subject::Colon,
                 found_at: None,
                 next: None,
                 prev: None,
             },
             space: Pencil {
-                id: 3,
+                id: Self::ID_SPACE,
                 subject: Subject::Space,
                 found_at: None,
                 next: None,
                 prev: None,
             },
             desc: Pencil {
-                id: 4,
+                id: Self::ID_DESC,
                 subject: Subject::Desc,
                 found_at: None,
                 next: None,
@@ -85,6 +92,30 @@ impl Paper {
                 None => {}
             }
             next = Some(one.subject);
+        }
+    }
+
+    #[inline]
+    pub fn find_pencil_by_id(&self, id: usize) -> &Pencil {
+        match id {
+            Self::ID_ROOT => &self.root,
+            Self::ID_KIND => &self.kind,
+            Self::ID_COLON => &self.colon,
+            Self::ID_SPACE => &self.space,
+            Self::ID_DESC => &self.desc,
+            _ => unreachable!(),
+        }
+    }
+
+    #[inline]
+    pub fn find_pencil_by_id_mut(&mut self, id: usize) -> &mut Pencil {
+        match id {
+            Self::ID_ROOT => &mut self.root,
+            Self::ID_KIND => &mut self.kind,
+            Self::ID_COLON => &mut self.colon,
+            Self::ID_SPACE => &mut self.space,
+            Self::ID_DESC => &mut self.desc,
+            _ => unreachable!(),
         }
     }
 
