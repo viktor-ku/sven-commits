@@ -8,7 +8,6 @@ mod weak_commit;
 mod at;
 mod issue;
 mod paper;
-mod pocket;
 
 fn main() {
     println!("Hello, world!");

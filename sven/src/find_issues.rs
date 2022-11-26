@@ -2,7 +2,7 @@ use crate::{
     additive::Additive,
     at::At,
     issue::{Issue, IssueData, IssueSubject, Misplaced, Missing},
-    paper::Paper,
+    paper::{Paper, Subject},
     weak_commit::{
         parse_header::{Token, TokenKind},
         WeakCommit,
@@ -20,148 +20,65 @@ pub fn find_issues(commit: &str) -> Result<Vec<Issue>> {
 }
 
 fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
-    println!("tokens {:#?}", tokens);
     let mut paper = Paper::new();
+    let mut id = Additive::new();
+
+    println!("tokens {:#?}", tokens);
 
     // find first occurences of every paper token, except the desc
     for token in tokens {
         match token.kind {
-            TokenKind::Seq => match paper.type_id {
-                Some(_) => {}
-                None => paper.type_id = Some(token.id),
-            },
-            TokenKind::Colon => match paper.colon_id {
-                Some(_) => {}
-                None => paper.colon_id = Some(token.id),
-            },
-            TokenKind::Whitespace => match paper.space_id {
-                Some(_) => {}
-                None => paper.space_id = Some(token.id),
-            },
+            TokenKind::Seq => {
+                if paper.kind.is_missing() {
+                    paper.kind.found_at = Some(token.id);
+                }
+            }
+            TokenKind::Colon => {
+                if paper.colon.is_missing() {
+                    paper.colon.found_at = Some(token.id);
+                }
+            }
+            TokenKind::Whitespace => {
+                if paper.space.is_missing() {
+                    paper.space.found_at = Some(token.id);
+                }
+            }
             _ => {}
         }
     }
 
     // this is our first attempt at figuring out where the desc starts, that is
     // after the at most far token we found + 1
-    paper.desc_id = [paper.type_id, paper.colon_id, paper.space_id, paper.desc_id]
-        .iter()
-        .flatten()
-        .max()
-        .map(|x| x + 1);
+    let desc_start = [
+        paper.kind.found_at,
+        paper.colon.found_at,
+        paper.space.found_at,
+        paper.desc.found_at,
+    ]
+    .iter()
+    .flatten()
+    .max()
+    .map(|x| x + 1);
+    match desc_start {
+        Some(desc_start) => {
+            paper.desc.found_at = Some(desc_start);
+        }
+        None => {}
+    };
 
-    println!("{:?}", paper);
+    paper.build_map();
+
+    println!("paper {:?}", paper);
 
     if paper.is_empty() {
         issues.push(Issue {
-            id: 0,
+            id: id.stamp(),
             subject: IssueSubject::Header,
             data: IssueData::Missing(Missing {
                 expected_at: At::start(),
             }),
         });
         return;
-    }
-
-    let mut id = Additive::new();
-
-    if paper.type_id.is_none() {
-        issues.push(Issue {
-            id: id.stamp(),
-            subject: IssueSubject::Type,
-            data: IssueData::Missing(Missing {
-                expected_at: At::start(),
-            }),
-        });
-    }
-    if paper.colon_id.is_none() {
-        issues.push(Issue {
-            id: id.stamp(),
-            subject: IssueSubject::Colon,
-            data: IssueData::Missing(Missing {
-                expected_at: match paper.type_id {
-                    Some(id) => At::after_token(id),
-                    None => match issues.last() {
-                        Some(issue) => At::after_issue(issue.id),
-                        None => unreachable!(),
-                    },
-                },
-            }),
-        });
-    }
-    if paper.space_id.is_none() {
-        issues.push(Issue {
-            id: id.stamp(),
-            subject: IssueSubject::Whitespace,
-            data: IssueData::Missing(Missing {
-                expected_at: match paper.colon_id {
-                    Some(id) => At::after_token(id),
-                    None => match issues.last() {
-                        Some(issue) => At::after_issue(issue.id),
-                        None => unreachable!(),
-                    },
-                },
-            }),
-        });
-    }
-    if paper.desc_id.unwrap() == tokens.len() - 1 {
-        issues.push(Issue {
-            id: id.stamp(),
-            subject: IssueSubject::Desc,
-            data: IssueData::Missing(Missing {
-                expected_at: match paper.space_id {
-                    Some(id) => At::after_token(id),
-                    None => match issues.last() {
-                        Some(issue) => At::after_issue(issue.id),
-                        None => unreachable!(),
-                    },
-                },
-            }),
-        });
-    }
-
-    match (paper.type_id, paper.colon_id) {
-        (Some(type_id), Some(colon_id)) => {
-            debug_assert!(type_id != colon_id);
-
-            if type_id > colon_id {
-                issues.push(Issue {
-                    id: id.stamp(),
-                    subject: IssueSubject::Type,
-                    data: IssueData::Misplaced(Misplaced {
-                        expected_at: At::start(),
-                        found_at: At::exactly_token(tokens[paper.type_id.unwrap()].id),
-                    }),
-                });
-                issues.push(Issue {
-                    id: id.stamp(),
-                    subject: IssueSubject::Colon,
-                    data: IssueData::Misplaced(Misplaced {
-                        expected_at: At::after_token(type_id),
-                        found_at: At::start(),
-                    }),
-                });
-            }
-        }
-        _ => {}
-    }
-
-    match (paper.colon_id, paper.space_id) {
-        (Some(colon_id), Some(space_id)) => {
-            debug_assert!(colon_id != space_id);
-
-            if colon_id > space_id {
-                issues.push(Issue {
-                    id: id.stamp(),
-                    subject: IssueSubject::Colon,
-                    data: IssueData::Misplaced(Misplaced {
-                        expected_at: At::after_token(todo!()),
-                        found_at: At::exactly_token(colon_id),
-                    }),
-                });
-            }
-        }
-        _ => {}
     }
 }
 
