@@ -1,7 +1,7 @@
 use crate::{pencil::Pencil, subject::Subject};
 use std::{collections::BTreeSet, fmt::Debug};
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(PartialEq, Eq)]
 pub struct Paper {
     root: Pencil,
     pub kind: Pencil,
@@ -101,5 +101,45 @@ impl Paper {
             && self.colon.is_missing()
             && self.space.is_missing()
             && self.desc.is_missing()
+    }
+}
+
+impl Debug for Paper {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        #[inline]
+        fn at(at: Option<usize>) -> String {
+            match at {
+                Some(at) => format!("{}", at),
+                None => "no".to_string(),
+            }
+        }
+
+        writeln!(
+            f,
+            "paper: type({}) -> colon({}) -> space({}) -> desc({})",
+            at(self.kind.found_at),
+            at(self.colon.found_at),
+            at(self.space.found_at),
+            at(self.desc.found_at),
+        )?;
+
+        write!(f, "|      ")?;
+        let mut t: BTreeSet<Pencil> = BTreeSet::new();
+        t.insert(self.root);
+        t.insert(self.kind);
+        t.insert(self.colon);
+        t.insert(self.space);
+        t.insert(self.desc);
+        for one in t {
+            if one.subject == Subject::Root {
+                continue;
+            }
+            let pencil = self.find_pencil(one.subject);
+            write!(f, "{}({})", one.subject, at(pencil.found_at))?;
+            if one.subject != Subject::Desc {
+                write!(f, " -> ")?;
+            }
+        }
+        write!(f, "\n")
     }
 }
