@@ -146,19 +146,3 @@ impl Paper {
             && self.desc.is_missing()
     }
 }
-
-#[cfg(test)]
-mod tests {
-    use super::*;
-    use pretty_assertions::assert_eq;
-
-    #[test]
-    fn it_works() {
-        let mut paper = Paper::new();
-        paper.kind.found_at = Some(1);
-        paper.colon.found_at = Some(0);
-        paper.build_map();
-        println!("{:#?}", paper);
-        assert_eq!(1, 2);
-    }
-}

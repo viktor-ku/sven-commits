@@ -68,7 +68,7 @@ fn find_header_issues(tokens: &[Token], issues: &mut Vec<Issue>) {
 
     paper.build_map();
 
-    println!("paper {:?}", paper);
+    println!("{:#?}", paper);
 
     if paper.is_empty() {
         issues.push(Issue {
