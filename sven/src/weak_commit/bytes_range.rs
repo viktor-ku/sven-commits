@@ -9,11 +9,16 @@ pub struct BytesRange {
 }
 
 impl BytesRange {
+    #[inline]
+    pub fn new(start: usize, end: usize) -> Self {
+        Self { start, end }
+    }
+
     /// Convenience fn to get the total bytes of the
     /// associated bytes range.
     #[inline]
     pub fn total(&self) -> usize {
-        debug_assert!(self.end >= self.start);
+        debug_assert!(self.end > self.start);
         self.end - self.start
     }
 }
