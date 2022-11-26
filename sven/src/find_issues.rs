@@ -2,7 +2,7 @@ use crate::{
     additive::Additive,
     at::At,
     issue::{Issue, IssueData, IssueSubject, Misplaced, Missing},
-    paper::{Paper, Subject},
+    paper::Paper,
     weak_commit::{
         parse_header::{Token, TokenKind},
         WeakCommit,
