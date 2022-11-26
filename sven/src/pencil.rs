@@ -3,11 +3,10 @@ use std::{cmp::Ordering, fmt::Debug};
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Pencil {
-    pub id: usize,
     pub subject: Subject,
     pub found_at: Option<usize>,
-    pub next: Option<usize>,
-    pub prev: Option<usize>,
+    pub next: Option<Subject>,
+    pub prev: Option<Subject>,
 }
 
 impl PartialOrd for Pencil {
@@ -31,7 +30,7 @@ impl Ord for Pencil {
     fn cmp(&self, other: &Self) -> Ordering {
         match self.partial_cmp(other) {
             Some(ord) => ord,
-            None => self.id.cmp(&other.id),
+            None => self.subject.cmp(&other.subject),
         }
     }
 }
