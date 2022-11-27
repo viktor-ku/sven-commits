@@ -5,6 +5,7 @@ use self::{
 use crate::block::Block;
 use anyhow::Result;
 use pest::Parser;
+use std::collections::BTreeSet;
 
 mod bytes_range;
 pub use bytes_range::BytesRange;
@@ -17,7 +18,7 @@ pub use row::Row;
 
 #[derive(Debug, PartialEq)]
 pub struct WeakCommit {
-    pub header: Vec<Block>,
+    pub header: BTreeSet<Block>,
     pub rows: Vec<Row>,
 }
 
@@ -61,7 +62,7 @@ impl WeakCommit {
                 let header_str = &commit[row.bytes.start..row.bytes.end];
                 parse_header(header_str)?
             }
-            None => Vec::new(),
+            None => BTreeSet::new(),
         };
 
         Ok(Self { rows, header })

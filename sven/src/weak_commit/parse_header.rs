@@ -1,19 +1,28 @@
 use super::{bytes_range::BytesRange, CRule, CommitParser};
 use crate::{
     additive::Additive,
-    block::{Block, BlockKind},
+    block::{Block, Info, Kind},
+    subject::Subject,
 };
 use anyhow::Result;
 use pest::Parser;
+use std::collections::BTreeSet;
 
-pub fn parse_header(header: &str) -> Result<Vec<Block>> {
-    let mut v = Vec::new();
+pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
     let mut word_bytes = 0;
-    let mut at = Additive::new();
-    let mut id = Additive {
-        step: 1024,
-        val: 1024,
-    };
+    let mut found_at = Additive::new();
+    let mut id = Additive { step: 1024, val: 0 };
+    let mut v = vec![Block {
+        id: id.stamp(),
+        found_at: found_at.stamp(),
+        bytes: BytesRange { start: 0, end: 0 },
+        kind: Kind::Root,
+        info: Info {
+            subject: Some(Subject::Root),
+        },
+        #[cfg(debug_assertions)]
+        source: header.to_string(),
+    }];
 
     let rules = CommitParser::parse(CRule::Tokens, header)?;
 
@@ -34,12 +43,13 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                             if word_bytes > 0 {
                                 v.push(Block {
                                     id: id.stamp(),
-                                    at: at.stamp(),
-                                    kind: BlockKind::Seq,
+                                    found_at: found_at.stamp(),
+                                    kind: Kind::Seq,
                                     bytes: BytesRange {
                                         start: span.start() - word_bytes,
                                         end: span.end() - 1,
                                     },
+                                    info: Info::default(),
                                     #[cfg(debug_assertions)]
                                     source: header.to_string(),
                                 });
@@ -52,12 +62,13 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                         CRule::TokenOpenBracket => {
                             v.push(Block {
                                 id: id.stamp(),
-                                at: at.stamp(),
-                                kind: BlockKind::OpenBracket,
+                                found_at: found_at.stamp(),
+                                kind: Kind::OpenBracket,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                info: Info::default(),
                                 #[cfg(debug_assertions)]
                                 source: header.to_string(),
                             });
@@ -65,12 +76,13 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                         CRule::TokenCloseBracket => {
                             v.push(Block {
                                 id: id.stamp(),
-                                at: at.stamp(),
-                                kind: BlockKind::CloseBracket,
+                                found_at: found_at.stamp(),
+                                kind: Kind::CloseBracket,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                info: Info::default(),
                                 #[cfg(debug_assertions)]
                                 source: header.to_string(),
                             });
@@ -78,12 +90,13 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                         CRule::TokenExclMark => {
                             v.push(Block {
                                 id: id.stamp(),
-                                at: at.stamp(),
-                                kind: BlockKind::ExclMark,
+                                found_at: found_at.stamp(),
+                                kind: Kind::ExclMark,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                info: Info::default(),
                                 #[cfg(debug_assertions)]
                                 source: header.to_string(),
                             });
@@ -91,12 +104,13 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                         CRule::TokenColon => {
                             v.push(Block {
                                 id: id.stamp(),
-                                at: at.stamp(),
-                                kind: BlockKind::Colon,
+                                found_at: found_at.stamp(),
+                                kind: Kind::Colon,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                info: Info::default(),
                                 #[cfg(debug_assertions)]
                                 source: header.to_string(),
                             });
@@ -104,12 +118,13 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                         CRule::TokenWhitespace => {
                             v.push(Block {
                                 id: id.stamp(),
-                                at: at.stamp(),
-                                kind: BlockKind::Space,
+                                found_at: found_at.stamp(),
+                                kind: Kind::Space,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                info: Info::default(),
                                 #[cfg(debug_assertions)]
                                 source: header.to_string(),
                             });
@@ -117,12 +132,13 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                         CRule::TokenEOL => {
                             v.push(Block {
                                 id: id.stamp(),
-                                at: at.stamp(),
-                                kind: BlockKind::EOL,
+                                found_at: found_at.stamp(),
+                                kind: Kind::EOL,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
                                 },
+                                info: Info::default(),
                                 #[cfg(debug_assertions)]
                                 source: header.to_string(),
                             });
@@ -141,31 +157,33 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
             Some(token) => {
                 v.push(Block {
                     id: id.stamp(),
-                    at: at.stamp(),
-                    kind: BlockKind::Seq,
+                    found_at: found_at.stamp(),
+                    kind: Kind::Seq,
                     bytes: BytesRange {
                         start: token.bytes.end,
                         end: token.bytes.end + word_bytes,
                     },
+                    info: Info::default(),
                     #[cfg(debug_assertions)]
                     source: header.to_string(),
                 });
             }
             None => v.push(Block {
                 id: id.stamp(),
-                at: at.stamp(),
-                kind: BlockKind::Seq,
+                found_at: found_at.stamp(),
+                kind: Kind::Seq,
                 bytes: BytesRange {
                     start: 0,
                     end: word_bytes,
                 },
+                info: Info::default(),
                 #[cfg(debug_assertions)]
                 source: header.to_string(),
             }),
         }
     }
 
-    Ok(v)
+    Ok(BTreeSet::from_iter(v.into_iter()))
 }
 
 #[cfg(test)]
@@ -176,20 +194,32 @@ mod rows {
     #[test]
     fn ends_with_eol() {
         let source = String::from("eol\n");
-        let actual = parse_header(&source).unwrap();
+        let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
             Block {
+                id: 0,
+                found_at: 0,
+                kind: Kind::Root,
+                bytes: BytesRange::empty(0),
+                info: Info {
+                    subject: Some(Subject::Root),
+                },
+                source: source.clone(),
+            },
+            Block {
                 id: 1024,
-                at: 0,
-                kind: BlockKind::Seq,
+                found_at: 1,
+                kind: Kind::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
+                info: Info::default(),
                 source: source.clone(),
             },
             Block {
                 id: 1024 * 2,
-                at: 1,
-                kind: BlockKind::EOL,
+                found_at: 2,
+                kind: Kind::EOL,
                 bytes: BytesRange { start: 3, end: 4 },
+                info: Info::default(),
                 source: source.clone(),
             },
         ];
@@ -199,20 +229,32 @@ mod rows {
     #[test]
     fn space_at_the_start_valid_next_word_align() {
         let source = String::from(" space");
-        let actual = parse_header(&source).unwrap();
+        let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
             Block {
+                id: 0,
+                found_at: 0,
+                kind: Kind::Root,
+                bytes: BytesRange::empty(0),
+                info: Info {
+                    subject: Some(Subject::Root),
+                },
+                source: source.clone(),
+            },
+            Block {
                 id: 1024,
-                at: 0,
-                kind: BlockKind::Space,
+                found_at: 1,
+                kind: Kind::Space,
                 bytes: BytesRange { start: 0, end: 1 },
+                info: Info::default(),
                 source: source.clone(),
             },
             Block {
                 id: 1024 * 2,
-                at: 1,
-                kind: BlockKind::Seq,
+                found_at: 2,
+                kind: Kind::Seq,
                 bytes: BytesRange { start: 1, end: 6 },
+                info: Info::default(),
                 source: source.clone(),
             },
         ];
@@ -222,55 +264,83 @@ mod rows {
     #[test]
     fn one_word() {
         let source = String::from("fix");
-        let actual = parse_header(&source).unwrap();
-        let expected = vec![Block {
-            id: 1024,
-            at: 0,
-            kind: BlockKind::Seq,
-            bytes: BytesRange { start: 0, end: 3 },
-            source: source.clone(),
-        }];
+        let actual = Vec::from_iter(parse_header(&source).unwrap());
+        let expected = vec![
+            Block {
+                id: 0,
+                found_at: 0,
+                kind: Kind::Root,
+                bytes: BytesRange::empty(0),
+                info: Info {
+                    subject: Some(Subject::Root),
+                },
+                source: source.clone(),
+            },
+            Block {
+                id: 1024,
+                found_at: 1,
+                kind: Kind::Seq,
+                bytes: BytesRange { start: 0, end: 3 },
+                info: Info::default(),
+                source: source.clone(),
+            },
+        ];
         assert_eq!(actual, expected);
     }
 
     #[test]
     fn some_string_utf8() {
         let source = String::from("рад два три");
-        let actual = parse_header(&source).unwrap();
+        let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
             Block {
+                id: 0,
+                found_at: 0,
+                kind: Kind::Root,
+                bytes: BytesRange::empty(0),
+                info: Info {
+                    subject: Some(Subject::Root),
+                },
+                source: source.clone(),
+            },
+            Block {
                 id: 1024,
-                at: 0,
-                kind: BlockKind::Seq,
+                found_at: 1,
+                kind: Kind::Seq,
                 bytes: BytesRange { start: 0, end: 6 },
+                info: Info::default(),
                 source: source.clone(),
             },
             Block {
                 id: 1024 * 2,
-                at: 1,
-                kind: BlockKind::Space,
+                found_at: 2,
+                kind: Kind::Space,
                 bytes: BytesRange { start: 6, end: 7 },
+                info: Info::default(),
                 source: source.clone(),
             },
             Block {
                 id: 1024 * 3,
-                at: 2,
-                kind: BlockKind::Seq,
+                found_at: 3,
+                kind: Kind::Seq,
                 bytes: BytesRange { start: 7, end: 13 },
+                info: Info::default(),
                 source: source.clone(),
             },
             Block {
                 id: 1024 * 4,
-                at: 3,
-                kind: BlockKind::Space,
+                found_at: 4,
+                kind: Kind::Space,
                 bytes: BytesRange { start: 13, end: 14 },
+                info: Info::default(),
                 source: source.clone(),
             },
             Block {
                 id: 1024 * 5,
-                at: 4,
-                kind: BlockKind::Seq,
+                found_at: 5,
+                kind: Kind::Seq,
                 bytes: BytesRange { start: 14, end: 20 },
+                info: Info::default(),
                 source: source.clone(),
             },
         ];
@@ -280,34 +350,48 @@ mod rows {
     #[test]
     fn working_commit() {
         let source = String::from("fix: me");
-        let actual = parse_header(&source).unwrap();
+        let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
             Block {
+                id: 0,
+                found_at: 0,
+                kind: Kind::Root,
+                bytes: BytesRange::empty(0),
+                info: Info {
+                    subject: Some(Subject::Root),
+                },
+                source: source.clone(),
+            },
+            Block {
                 id: 1024,
-                at: 0,
-                kind: BlockKind::Seq,
+                found_at: 1,
+                kind: Kind::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
+                info: Info::default(),
                 source: source.clone(),
             },
             Block {
                 id: 1024 * 2,
-                at: 1,
-                kind: BlockKind::Colon,
+                found_at: 2,
+                kind: Kind::Colon,
                 bytes: BytesRange { start: 3, end: 4 },
+                info: Info::default(),
                 source: source.clone(),
             },
             Block {
                 id: 1024 * 3,
-                at: 2,
-                kind: BlockKind::Space,
+                found_at: 3,
+                kind: Kind::Space,
                 bytes: BytesRange { start: 4, end: 5 },
+                info: Info::default(),
                 source: source.clone(),
             },
             Block {
                 id: 1024 * 4,
-                at: 3,
-                kind: BlockKind::Seq,
+                found_at: 4,
+                kind: Kind::Seq,
                 bytes: BytesRange { start: 5, end: 7 },
+                info: Info::default(),
                 source: source.clone(),
             },
         ];

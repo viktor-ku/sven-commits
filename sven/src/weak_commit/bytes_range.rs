@@ -18,8 +18,12 @@ impl BytesRange {
     /// associated bytes range.
     #[inline]
     pub fn total(&self) -> usize {
-        debug_assert!(self.end > self.start);
         self.end - self.start
+    }
+
+    #[inline]
+    pub fn empty(at: usize) -> Self {
+        Self { start: at, end: at }
     }
 }
 

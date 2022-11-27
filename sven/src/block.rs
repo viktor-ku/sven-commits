@@ -1,17 +1,5 @@
-use crate::weak_commit::BytesRange;
+use crate::{subject::Subject, weak_commit::BytesRange};
 use std::fmt::Debug;
-
-#[derive(Debug, PartialEq, Eq)]
-pub enum BlockKind {
-    /// Any sequence of any utf8 characters, excluding other kinds of token
-    Seq,
-    Space,
-    OpenBracket,
-    CloseBracket,
-    ExclMark,
-    Colon,
-    EOL,
-}
 
 #[derive(PartialEq, Eq)]
 pub struct Block {
@@ -20,15 +8,43 @@ pub struct Block {
     pub id: usize,
 
     /// Actual index by which this block could be found
-    pub at: usize,
+    pub found_at: usize,
 
-    pub kind: BlockKind,
+    /// Kind of the block from the general point of view right after the parsing,
+    /// includes e.g. Colon which represents a colon (":"), but it has nothing to do
+    /// with the conventional commit colon in header because it might not be unique in
+    /// the set of blocks, but also it's not necessary represents the actual colon that
+    /// comes after the conventional commit type or scope
+    pub kind: Kind,
 
     /// Bytes range taken by the block
     pub bytes: BytesRange,
 
+    /// Actual information about the block in the context of conventional commit
+    pub info: Info,
+
     #[cfg(debug_assertions)]
     pub source: String,
+}
+
+#[derive(Debug, PartialEq, Eq)]
+pub enum Kind {
+    /// Any sequence of any utf8 characters, excluding other kinds of token
+    Seq,
+    Root,
+    Space,
+    OpenBracket,
+    CloseBracket,
+    ExclMark,
+    Colon,
+    EOL,
+}
+
+#[derive(Debug, PartialEq, Eq, Default)]
+pub struct Info {
+    /// If any particular block is identified as a part of conventional commit
+    /// structure then it gets assigned a certain subject within the specification
+    pub subject: Option<Subject>,
 }
 
 impl Block {
@@ -45,16 +61,17 @@ impl Block {
     }
 }
 
-impl BlockKind {
+impl Kind {
     pub fn stringify<'a>(&self) -> &'a str {
         match self {
-            BlockKind::Seq => "Seq",
-            BlockKind::Space => "Space",
-            BlockKind::OpenBracket => "OpenBracket",
-            BlockKind::CloseBracket => "CloseBracket",
-            BlockKind::ExclMark => "ExclMark",
-            BlockKind::Colon => "Colon",
-            BlockKind::EOL => "EOL",
+            Kind::Root => "Root",
+            Kind::Seq => "Seq",
+            Kind::Space => "Space",
+            Kind::OpenBracket => "OpenBracket",
+            Kind::CloseBracket => "CloseBracket",
+            Kind::ExclMark => "ExclMark",
+            Kind::Colon => "Colon",
+            Kind::EOL => "EOL",
         }
     }
 }
@@ -83,28 +100,29 @@ impl Debug for Block {
         let kind = {
             let kind_str = self.kind.stringify();
             let len = kind_str.len();
-            let diff = 10 - len;
+            let diff = 12 - len;
             format!("{:?}{}", self.kind, " ".repeat(diff))
         };
 
-        let at = self.at;
+        let at = self.found_at;
         write!(f, "{}", at)?;
         if at < 10 {
             write!(f, " ")?;
         }
         write!(f, " ")?;
 
-        write!(
-            f,
-            "{} {:?} \"{}\"",
-            kind,
-            self.bytes,
-            match self.kind {
-                BlockKind::EOL => {
-                    "\\n"
-                }
-                _ => self.capture(&self.source),
+        write!(f, "{} {:?}", kind, self.bytes)?;
+
+        match self.kind {
+            Kind::Root => {}
+            Kind::EOL => {
+                write!(f, " \\n")?;
             }
-        )
+            _ => {
+                write!(f, " \"{}\"", self.capture(&self.source))?;
+            }
+        };
+
+        write!(f, "")
     }
 }

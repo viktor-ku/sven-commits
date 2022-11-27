@@ -21,7 +21,7 @@ impl Paper {
                 prev: None,
             },
             kind: Pencil {
-                subject: Subject::Kind,
+                subject: Subject::Type,
                 found_at: None,
                 next: None,
                 prev: None,
@@ -77,10 +77,11 @@ impl Paper {
     pub fn find_pencil(&self, subject: Subject) -> &Pencil {
         match subject {
             Subject::Root => &self.root,
-            Subject::Kind => &self.kind,
+            Subject::Type => &self.kind,
             Subject::Colon => &self.colon,
             Subject::Space => &self.space,
             Subject::Desc => &self.desc,
+            _ => todo!(),
         }
     }
 
@@ -88,10 +89,11 @@ impl Paper {
     pub fn find_pencil_mut(&mut self, subject: Subject) -> &mut Pencil {
         match subject {
             Subject::Root => &mut self.root,
-            Subject::Kind => &mut self.kind,
+            Subject::Type => &mut self.kind,
             Subject::Colon => &mut self.colon,
             Subject::Space => &mut self.space,
             Subject::Desc => &mut self.desc,
+            _ => todo!(),
         }
     }
 
