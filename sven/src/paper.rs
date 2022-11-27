@@ -1,4 +1,4 @@
-use crate::{pencil::Pencil, subject::Subject};
+use crate::{domain::Domain, pencil::Pencil};
 use std::{collections::BTreeSet, fmt::Debug};
 
 #[derive(PartialEq, Eq)]
@@ -15,31 +15,31 @@ impl Paper {
     pub fn new() -> Self {
         Self {
             root: Pencil {
-                subject: Subject::Root,
+                domain: Domain::Root,
                 found_at: None,
                 next: None,
                 prev: None,
             },
             kind: Pencil {
-                subject: Subject::Type,
+                domain: Domain::Type,
                 found_at: None,
                 next: None,
                 prev: None,
             },
             colon: Pencil {
-                subject: Subject::Colon,
+                domain: Domain::Colon,
                 found_at: None,
                 next: None,
                 prev: None,
             },
             space: Pencil {
-                subject: Subject::Space,
+                domain: Domain::Space,
                 found_at: None,
                 next: None,
                 prev: None,
             },
             desc: Pencil {
-                subject: Subject::Desc,
+                domain: Domain::Desc,
                 found_at: None,
                 next: None,
                 prev: None,
@@ -55,18 +55,18 @@ impl Paper {
         t.insert(self.space);
         t.insert(self.desc);
 
-        let mut prev: Option<Subject> = None;
-        let mut next: Option<Subject> = None;
+        let mut prev: Option<Domain> = None;
+        let mut next: Option<Domain> = None;
         for one in t {
             if let Some(prev_subject) = prev {
-                self.find_pencil_mut(one.subject).prev = Some(prev_subject);
+                self.find_pencil_mut(one.domain).prev = Some(prev_subject);
             }
-            prev = Some(one.subject);
+            prev = Some(one.domain);
 
             if let Some(next_subject) = next {
-                self.find_pencil_mut(next_subject).next = Some(one.subject);
+                self.find_pencil_mut(next_subject).next = Some(one.domain);
             }
-            next = Some(one.subject);
+            next = Some(one.domain);
         }
 
         debug_assert!(self.root.prev.is_none());
@@ -74,25 +74,25 @@ impl Paper {
     }
 
     #[inline]
-    pub fn find_pencil(&self, subject: Subject) -> &Pencil {
-        match subject {
-            Subject::Root => &self.root,
-            Subject::Type => &self.kind,
-            Subject::Colon => &self.colon,
-            Subject::Space => &self.space,
-            Subject::Desc => &self.desc,
+    pub fn find_pencil(&self, domain: Domain) -> &Pencil {
+        match domain {
+            Domain::Root => &self.root,
+            Domain::Type => &self.kind,
+            Domain::Colon => &self.colon,
+            Domain::Space => &self.space,
+            Domain::Desc => &self.desc,
             _ => todo!(),
         }
     }
 
     #[inline]
-    pub fn find_pencil_mut(&mut self, subject: Subject) -> &mut Pencil {
-        match subject {
-            Subject::Root => &mut self.root,
-            Subject::Type => &mut self.kind,
-            Subject::Colon => &mut self.colon,
-            Subject::Space => &mut self.space,
-            Subject::Desc => &mut self.desc,
+    pub fn find_pencil_mut(&mut self, domain: Domain) -> &mut Pencil {
+        match domain {
+            Domain::Root => &mut self.root,
+            Domain::Type => &mut self.kind,
+            Domain::Colon => &mut self.colon,
+            Domain::Space => &mut self.space,
+            Domain::Desc => &mut self.desc,
             _ => todo!(),
         }
     }
@@ -133,12 +133,12 @@ impl Debug for Paper {
         t.insert(self.space);
         t.insert(self.desc);
         for one in t {
-            if one.subject == Subject::Root {
+            if one.domain == Domain::Root {
                 continue;
             }
-            let pencil = self.find_pencil(one.subject);
-            write!(f, "{}({})", one.subject, at(pencil.found_at))?;
-            if one.subject != Subject::Desc {
+            let pencil = self.find_pencil(one.domain);
+            write!(f, "{}({})", one.domain, at(pencil.found_at))?;
+            if one.domain != Domain::Desc {
                 write!(f, " -> ")?;
             }
         }

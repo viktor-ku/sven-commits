@@ -2,7 +2,7 @@ use super::{bytes_range::BytesRange, CRule, CommitParser};
 use crate::{
     additive::Additive,
     block::{Block, Info, Kind},
-    subject::Subject,
+    domain::Domain,
 };
 use anyhow::Result;
 use pest::Parser;
@@ -18,7 +18,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
         bytes: BytesRange { start: 0, end: 0 },
         kind: Kind::Root,
         info: Info {
-            subject: Some(Subject::Root),
+            domain: Some(Domain::Root),
         },
         #[cfg(debug_assertions)]
         source: header.to_string(),
@@ -202,7 +202,7 @@ mod rows {
                 kind: Kind::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
-                    subject: Some(Subject::Root),
+                    domain: Some(Domain::Root),
                 },
                 source: source.clone(),
             },
@@ -237,7 +237,7 @@ mod rows {
                 kind: Kind::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
-                    subject: Some(Subject::Root),
+                    domain: Some(Domain::Root),
                 },
                 source: source.clone(),
             },
@@ -272,7 +272,7 @@ mod rows {
                 kind: Kind::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
-                    subject: Some(Subject::Root),
+                    domain: Some(Domain::Root),
                 },
                 source: source.clone(),
             },
@@ -299,7 +299,7 @@ mod rows {
                 kind: Kind::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
-                    subject: Some(Subject::Root),
+                    domain: Some(Domain::Root),
                 },
                 source: source.clone(),
             },
@@ -358,7 +358,7 @@ mod rows {
                 kind: Kind::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
-                    subject: Some(Subject::Root),
+                    domain: Some(Domain::Root),
                 },
                 source: source.clone(),
             },

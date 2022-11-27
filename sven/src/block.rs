@@ -1,4 +1,4 @@
-use crate::{subject::Subject, weak_commit::BytesRange};
+use crate::{domain::Domain, weak_commit::BytesRange};
 use std::fmt::{Debug, Display};
 
 #[derive(Debug, PartialEq, Eq)]
@@ -44,7 +44,7 @@ pub enum Kind {
 pub struct Info {
     /// If any particular block is identified as a part of conventional commit
     /// structure then it gets assigned a certain subject within the specification
-    pub subject: Option<Subject>,
+    pub domain: Option<Domain>,
 }
 
 impl Block {
@@ -108,14 +108,14 @@ impl Display for Block {
             let diff = 12 - len;
             format!("{}{}", kind, " ".repeat(diff))
         };
-        let subject = {
-            let subject = match self.info.subject {
-                Some(subject) => format!("{}", subject),
+        let domain = {
+            let domain = match self.info.domain {
+                Some(domain) => format!("{}", domain),
                 None => "-".to_string(),
             };
-            let len = subject.len();
+            let len = domain.len();
             let diff = 9 - len;
-            format!("{}{}", subject, " ".repeat(diff))
+            format!("{}{}", domain, " ".repeat(diff))
         };
 
         let at = self.found_at;
@@ -125,7 +125,7 @@ impl Display for Block {
         }
         write!(f, " ")?;
 
-        write!(f, "{} {} {:?}", kind, subject, self.bytes)?;
+        write!(f, "{} {} {:?}", kind, domain, self.bytes)?;
 
         match self.kind {
             Kind::Root => {}
