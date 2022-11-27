@@ -1,7 +1,7 @@
 use crate::{subject::Subject, weak_commit::BytesRange};
-use std::fmt::Debug;
+use std::fmt::{Debug, Display};
 
-#[derive(PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Block {
     /// An id for the block created with a space for inserting other
     /// blocks in the middle
@@ -61,21 +61,6 @@ impl Block {
     }
 }
 
-impl Kind {
-    pub fn stringify<'a>(&self) -> &'a str {
-        match self {
-            Kind::Root => "Root",
-            Kind::Seq => "Seq",
-            Kind::Space => "Space",
-            Kind::OpenBracket => "OpenBracket",
-            Kind::CloseBracket => "CloseBracket",
-            Kind::ExclMark => "ExclMark",
-            Kind::Colon => "Colon",
-            Kind::EOL => "EOL",
-        }
-    }
-}
-
 impl PartialOrd for Block {
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.id.cmp(&other.id))
@@ -95,13 +80,42 @@ impl Into<(usize, usize)> for Block {
 }
 
 #[cfg(debug_assertions)]
-impl Debug for Block {
+impl Display for Kind {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Self::Root => "Root",
+                Self::Seq => "Seq",
+                Self::Space => "Space",
+                Self::OpenBracket => "OpenBracket",
+                Self::CloseBracket => "CloseBracket",
+                Self::ExclMark => "ExclMark",
+                Self::Colon => "Colon",
+                Self::EOL => "EOL",
+            }
+        )
+    }
+}
+
+#[cfg(debug_assertions)]
+impl Display for Block {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         let kind = {
-            let kind_str = self.kind.stringify();
-            let len = kind_str.len();
+            let kind = format!("{}", self.kind);
+            let len = kind.len();
             let diff = 12 - len;
-            format!("{:?}{}", self.kind, " ".repeat(diff))
+            format!("{}{}", kind, " ".repeat(diff))
+        };
+        let subject = {
+            let subject = match self.info.subject {
+                Some(subject) => format!("{}", subject),
+                None => "-".to_string(),
+            };
+            let len = subject.len();
+            let diff = 9 - len;
+            format!("{}{}", subject, " ".repeat(diff))
         };
 
         let at = self.found_at;
@@ -111,7 +125,7 @@ impl Debug for Block {
         }
         write!(f, " ")?;
 
-        write!(f, "{} {:?}", kind, self.bytes)?;
+        write!(f, "{} {} {:?}", kind, subject, self.bytes)?;
 
         match self.kind {
             Kind::Root => {}

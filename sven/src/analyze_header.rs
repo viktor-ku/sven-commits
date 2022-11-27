@@ -9,7 +9,14 @@ pub fn analyze_header(blocks: &mut BTreeSet<Block>) {
     let mut paper = Paper::new();
     let mut id = Additive::new();
 
-    println!("blocks {:#?}", blocks);
+    #[cfg(debug_assertions)]
+    {
+        println!("blocks: [");
+        for one in blocks.iter() {
+            println!("    {},", one);
+        }
+        print!("]\n");
+    };
 
     // find first occurences of every paper token, except the desc
     for block in blocks.iter() {
@@ -85,7 +92,10 @@ BREAKING CHANGE: supports many footers
         let actual = with_commit(commit);
         for one in actual {
             if one.info.subject.is_none() {
-                panic!("everything should be related to conventional commit {:#?}", one);
+                panic!(
+                    "everything should be related to conventional commit {:#?}",
+                    one
+                );
             }
         }
     }
