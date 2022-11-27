@@ -1,40 +1,39 @@
 use crate::{
     additive::Additive,
     at::At,
+    block::{Block, BlockKind},
     header_issue::header::{Issue, IssueData, IssueSubject, Misplaced, Missing},
     paper::Paper,
-    weak_commit::parse_header::{Token, TokenKind},
 };
 
-pub fn find_header_issues(tokens: &[Token]) -> Vec<Issue> {
+pub fn find_header_issues(blocks: &[Block]) -> Vec<Issue> {
     let mut issues = Vec::new();
     let mut paper = Paper::new();
     let mut id = Additive::new();
 
-    println!("tokens {:#?}", tokens);
+    println!("blocks {:#?}", blocks);
 
     // find first occurences of every paper token, except the desc
-    for token in tokens {
-        match token.kind {
-            TokenKind::Seq => {
+    for block in blocks {
+        match block.kind {
+            BlockKind::Seq => {
                 if paper.kind.is_missing() {
-                    paper.kind.found_at = Some(token.id);
+                    paper.kind.found_at = Some(block.at);
                 }
             }
-            TokenKind::Colon => {
+            BlockKind::Colon => {
                 if paper.colon.is_missing() {
-                    paper.colon.found_at = Some(token.id);
+                    paper.colon.found_at = Some(block.at);
                 }
             }
-            TokenKind::Whitespace => {
+            BlockKind::Space => {
                 if paper.space.is_missing() {
-                    paper.space.found_at = Some(token.id);
+                    paper.space.found_at = Some(block.at);
                 }
             }
             _ => {}
         }
     }
-
     // this is our first attempt at figuring out where the desc starts, that is
     // after the at most far token we found + 1
     let desc_start = [
@@ -67,6 +66,21 @@ pub fn find_header_issues(tokens: &[Token]) -> Vec<Issue> {
             }),
         });
         return issues;
+    }
+
+    if paper.colon.is_missing() {
+        issues.push(Issue {
+            id: id.stamp(),
+            subject: IssueSubject::Colon,
+            data: IssueData::Missing(Missing {
+                expected_at: At::after_token(
+                    paper
+                        .find_pencil(paper.colon.prev.unwrap())
+                        .found_at
+                        .unwrap(),
+                ),
+            }),
+        });
     }
 
     issues
@@ -133,8 +147,6 @@ BREAKING CHANGE: supports many footers
     }
 
     mod missing {
-        use crate::at::At;
-
         use super::*;
         use pretty_assertions::assert_eq;
 
@@ -168,7 +180,7 @@ colon missing after the type "colon"
                 &actual,
                 IssueSubject::Colon,
                 IssueData::Missing(Missing {
-                    expected_at: At::start(),
+                    expected_at: At::after_token(0),
                 }),
             );
         }

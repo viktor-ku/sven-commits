@@ -1,7 +1,8 @@
 use self::{
-    parse_header::{parse_header, Token},
+    parse_header::parse_header,
     parser::{CRule, CommitParser},
 };
+use crate::block::Block;
 use anyhow::Result;
 use pest::Parser;
 
@@ -16,7 +17,7 @@ pub use row::Row;
 
 #[derive(Debug, PartialEq)]
 pub struct WeakCommit {
-    pub header: Vec<Token>,
+    pub header: Vec<Block>,
     pub rows: Vec<Row>,
 }
 

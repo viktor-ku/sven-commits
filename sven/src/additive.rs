@@ -1,16 +1,17 @@
 pub struct Additive {
-    inner: usize,
+    pub val: usize,
+    pub step: usize,
 }
 
 impl Additive {
     #[inline]
     pub fn new() -> Self {
-        Self { inner: 0 }
+        Self { val: 0, step: 1 }
     }
 
     pub fn stamp(&mut self) -> usize {
-        let x = self.inner;
-        self.inner += 1;
+        let x = self.val;
+        self.val += self.step;
         x
     }
 }

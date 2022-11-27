@@ -5,6 +5,7 @@ extern crate pest_derive;
 
 mod additive;
 mod at;
+mod block;
 mod conventional_commit;
 mod find_header_issues;
 mod find_issues;
