@@ -1,5 +1,5 @@
 use crate::{domain::Domain, weak_commit::BytesRange};
-use std::fmt::{Debug, Display};
+use std::fmt::Debug;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Block {
@@ -8,9 +8,6 @@ pub struct Block {
     pub val: Val,
     pub bytes: BytesRange,
     pub info: Info,
-
-    #[cfg(debug_assertions)]
-    pub source: String,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -57,67 +54,5 @@ impl Ord for Block {
 impl Into<(usize, usize)> for Block {
     fn into(self) -> (usize, usize) {
         self.bytes.into()
-    }
-}
-
-#[cfg(debug_assertions)]
-impl Display for Val {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(
-            f,
-            "{}",
-            match self {
-                Self::Root => "Root",
-                Self::Seq => "Seq",
-                Self::Space => "Space",
-                Self::OpenBracket => "OpenBracket",
-                Self::CloseBracket => "CloseBracket",
-                Self::ExclMark => "ExclMark",
-                Self::Colon => "Colon",
-                Self::EOL => "EOL",
-            }
-        )
-    }
-}
-
-#[cfg(debug_assertions)]
-impl Display for Block {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let val = {
-            let val = format!("{}", self.val);
-            let len = val.len();
-            let diff = 12 - len;
-            format!("{}{}", val, " ".repeat(diff))
-        };
-        let domain = {
-            let domain = match self.info.domain {
-                Some(domain) => format!("{}", domain),
-                None => "-".to_string(),
-            };
-            let len = domain.len();
-            let diff = 9 - len;
-            format!("{}{}", domain, " ".repeat(diff))
-        };
-
-        let at = self.found_at;
-        write!(f, "{}", at)?;
-        if at < 10 {
-            write!(f, " ")?;
-        }
-        write!(f, " ")?;
-
-        write!(f, "{} {} {:?}", val, domain, self.bytes)?;
-
-        match self.val {
-            Val::Root => {}
-            Val::EOL => {
-                write!(f, " \\n")?;
-            }
-            _ => {
-                write!(f, " \"{}\"", self.capture(&self.source))?;
-            }
-        };
-
-        write!(f, "")
     }
 }

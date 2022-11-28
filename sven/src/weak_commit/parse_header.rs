@@ -20,8 +20,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
         info: Info {
             domain: Some(Domain::Root),
         },
-        #[cfg(debug_assertions)]
-        source: header.to_string(),
     }];
 
     let rules = CommitParser::parse(CRule::Tokens, header)?;
@@ -50,8 +48,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                         end: span.end() - 1,
                                     },
                                     info: Info::default(),
-                                    #[cfg(debug_assertions)]
-                                    source: header.to_string(),
                                 });
                                 word_bytes = 0;
                             }
@@ -69,8 +65,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     end: span.end(),
                                 },
                                 info: Info::default(),
-                                #[cfg(debug_assertions)]
-                                source: header.to_string(),
                             });
                         }
                         CRule::TokenCloseBracket => {
@@ -83,8 +77,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     end: span.end(),
                                 },
                                 info: Info::default(),
-                                #[cfg(debug_assertions)]
-                                source: header.to_string(),
                             });
                         }
                         CRule::TokenExclMark => {
@@ -97,8 +89,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     end: span.end(),
                                 },
                                 info: Info::default(),
-                                #[cfg(debug_assertions)]
-                                source: header.to_string(),
                             });
                         }
                         CRule::TokenColon => {
@@ -111,8 +101,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     end: span.end(),
                                 },
                                 info: Info::default(),
-                                #[cfg(debug_assertions)]
-                                source: header.to_string(),
                             });
                         }
                         CRule::TokenWhitespace => {
@@ -125,8 +113,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     end: span.end(),
                                 },
                                 info: Info::default(),
-                                #[cfg(debug_assertions)]
-                                source: header.to_string(),
                             });
                         }
                         CRule::TokenEOL => {
@@ -139,8 +125,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     end: span.end(),
                                 },
                                 info: Info::default(),
-                                #[cfg(debug_assertions)]
-                                source: header.to_string(),
                             });
                         }
                         _ => {}
@@ -164,8 +148,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                         end: token.bytes.end + word_bytes,
                     },
                     info: Info::default(),
-                    #[cfg(debug_assertions)]
-                    source: header.to_string(),
                 });
             }
             None => v.push(Block {
@@ -177,8 +159,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                     end: word_bytes,
                 },
                 info: Info::default(),
-                #[cfg(debug_assertions)]
-                source: header.to_string(),
             }),
         }
     }
@@ -204,7 +184,6 @@ mod rows {
                 info: Info {
                     domain: Some(Domain::Root),
                 },
-                source: source.clone(),
             },
             Block {
                 id: 1024,
@@ -212,7 +191,6 @@ mod rows {
                 val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
                 info: Info::default(),
-                source: source.clone(),
             },
             Block {
                 id: 1024 * 2,
@@ -220,7 +198,6 @@ mod rows {
                 val: Val::EOL,
                 bytes: BytesRange { start: 3, end: 4 },
                 info: Info::default(),
-                source: source.clone(),
             },
         ];
         assert_eq!(actual, expected);
@@ -239,7 +216,6 @@ mod rows {
                 info: Info {
                     domain: Some(Domain::Root),
                 },
-                source: source.clone(),
             },
             Block {
                 id: 1024,
@@ -247,7 +223,6 @@ mod rows {
                 val: Val::Space,
                 bytes: BytesRange { start: 0, end: 1 },
                 info: Info::default(),
-                source: source.clone(),
             },
             Block {
                 id: 1024 * 2,
@@ -255,7 +230,6 @@ mod rows {
                 val: Val::Seq,
                 bytes: BytesRange { start: 1, end: 6 },
                 info: Info::default(),
-                source: source.clone(),
             },
         ];
         assert_eq!(actual, expected);
@@ -274,7 +248,6 @@ mod rows {
                 info: Info {
                     domain: Some(Domain::Root),
                 },
-                source: source.clone(),
             },
             Block {
                 id: 1024,
@@ -282,7 +255,6 @@ mod rows {
                 val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
                 info: Info::default(),
-                source: source.clone(),
             },
         ];
         assert_eq!(actual, expected);
@@ -301,7 +273,6 @@ mod rows {
                 info: Info {
                     domain: Some(Domain::Root),
                 },
-                source: source.clone(),
             },
             Block {
                 id: 1024,
@@ -309,7 +280,6 @@ mod rows {
                 val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 6 },
                 info: Info::default(),
-                source: source.clone(),
             },
             Block {
                 id: 1024 * 2,
@@ -317,7 +287,6 @@ mod rows {
                 val: Val::Space,
                 bytes: BytesRange { start: 6, end: 7 },
                 info: Info::default(),
-                source: source.clone(),
             },
             Block {
                 id: 1024 * 3,
@@ -325,7 +294,6 @@ mod rows {
                 val: Val::Seq,
                 bytes: BytesRange { start: 7, end: 13 },
                 info: Info::default(),
-                source: source.clone(),
             },
             Block {
                 id: 1024 * 4,
@@ -333,7 +301,6 @@ mod rows {
                 val: Val::Space,
                 bytes: BytesRange { start: 13, end: 14 },
                 info: Info::default(),
-                source: source.clone(),
             },
             Block {
                 id: 1024 * 5,
@@ -341,7 +308,6 @@ mod rows {
                 val: Val::Seq,
                 bytes: BytesRange { start: 14, end: 20 },
                 info: Info::default(),
-                source: source.clone(),
             },
         ];
         assert_eq!(actual, expected);
@@ -360,7 +326,6 @@ mod rows {
                 info: Info {
                     domain: Some(Domain::Root),
                 },
-                source: source.clone(),
             },
             Block {
                 id: 1024,
@@ -368,7 +333,6 @@ mod rows {
                 val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
                 info: Info::default(),
-                source: source.clone(),
             },
             Block {
                 id: 1024 * 2,
@@ -376,7 +340,6 @@ mod rows {
                 val: Val::Colon,
                 bytes: BytesRange { start: 3, end: 4 },
                 info: Info::default(),
-                source: source.clone(),
             },
             Block {
                 id: 1024 * 3,
@@ -384,7 +347,6 @@ mod rows {
                 val: Val::Space,
                 bytes: BytesRange { start: 4, end: 5 },
                 info: Info::default(),
-                source: source.clone(),
             },
             Block {
                 id: 1024 * 4,
@@ -392,7 +354,6 @@ mod rows {
                 val: Val::Seq,
                 bytes: BytesRange { start: 5, end: 7 },
                 info: Info::default(),
-                source: source.clone(),
             },
         ];
         assert_eq!(actual, expected);

@@ -9,15 +9,6 @@ pub fn analyze_header(blocks: &mut BTreeSet<Block>) {
     let mut paper = Paper::new();
     let mut id = Additive::new();
 
-    #[cfg(debug_assertions)]
-    {
-        println!("blocks: [");
-        for one in blocks.iter() {
-            println!("    {},", one);
-        }
-        print!("]\n");
-    };
-
     // find first occurences of every paper token, except the desc
     for block in blocks.iter() {
         match block.val {
