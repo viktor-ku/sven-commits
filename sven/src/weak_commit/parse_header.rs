@@ -1,7 +1,7 @@
 use super::{bytes_range::BytesRange, CRule, CommitParser};
 use crate::{
     additive::Additive,
-    block::{Block, Info, Val},
+    block::{Block, Val},
     domain::Domain,
 };
 use anyhow::Result;
@@ -17,9 +17,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
         found_at: found_at.stamp(),
         bytes: BytesRange { start: 0, end: 0 },
         val: Val::Root,
-        info: Info {
-            domain: Some(Domain::Root),
-        },
+        domain: Some(Domain::Root),
     }];
 
     let rules = CommitParser::parse(CRule::Tokens, header)?;
@@ -47,7 +45,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                         start: span.start() - word_bytes,
                                         end: span.end() - 1,
                                     },
-                                    info: Info::default(),
+                                    domain: None,
                                 });
                                 word_bytes = 0;
                             }
@@ -64,7 +62,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
-                                info: Info::default(),
+                                domain: None,
                             });
                         }
                         CRule::TokenCloseBracket => {
@@ -76,7 +74,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
-                                info: Info::default(),
+                                domain: None,
                             });
                         }
                         CRule::TokenExclMark => {
@@ -88,7 +86,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
-                                info: Info::default(),
+                                domain: None,
                             });
                         }
                         CRule::TokenColon => {
@@ -100,7 +98,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
-                                info: Info::default(),
+                                domain: None,
                             });
                         }
                         CRule::TokenWhitespace => {
@@ -112,7 +110,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
-                                info: Info::default(),
+                                domain: None,
                             });
                         }
                         CRule::TokenEOL => {
@@ -124,7 +122,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                     start: span.start(),
                                     end: span.end(),
                                 },
-                                info: Info::default(),
+                                domain: None,
                             });
                         }
                         _ => {}
@@ -147,7 +145,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                         start: token.bytes.end,
                         end: token.bytes.end + word_bytes,
                     },
-                    info: Info::default(),
+                    domain: None,
                 });
             }
             None => v.push(Block {
@@ -158,7 +156,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                     start: 0,
                     end: word_bytes,
                 },
-                info: Info::default(),
+                domain: None,
             }),
         }
     }
@@ -181,23 +179,21 @@ mod rows {
                 found_at: 0,
                 val: Val::Root,
                 bytes: BytesRange::empty(0),
-                info: Info {
-                    domain: Some(Domain::Root),
-                },
+                domain: Some(Domain::Root),
             },
             Block {
                 id: 1024,
                 found_at: 1,
                 val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
-                info: Info::default(),
+                domain: None,
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::EOL,
                 bytes: BytesRange { start: 3, end: 4 },
-                info: Info::default(),
+                domain: None,
             },
         ];
         assert_eq!(actual, expected);
@@ -213,23 +209,21 @@ mod rows {
                 found_at: 0,
                 val: Val::Root,
                 bytes: BytesRange::empty(0),
-                info: Info {
-                    domain: Some(Domain::Root),
-                },
+                domain: Some(Domain::Root),
             },
             Block {
                 id: 1024,
                 found_at: 1,
                 val: Val::Space,
                 bytes: BytesRange { start: 0, end: 1 },
-                info: Info::default(),
+                domain: None,
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::Seq,
                 bytes: BytesRange { start: 1, end: 6 },
-                info: Info::default(),
+                domain: None,
             },
         ];
         assert_eq!(actual, expected);
@@ -245,16 +239,14 @@ mod rows {
                 found_at: 0,
                 val: Val::Root,
                 bytes: BytesRange::empty(0),
-                info: Info {
-                    domain: Some(Domain::Root),
-                },
+                domain: Some(Domain::Root),
             },
             Block {
                 id: 1024,
                 found_at: 1,
                 val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
-                info: Info::default(),
+                domain: None,
             },
         ];
         assert_eq!(actual, expected);
@@ -270,44 +262,42 @@ mod rows {
                 found_at: 0,
                 val: Val::Root,
                 bytes: BytesRange::empty(0),
-                info: Info {
-                    domain: Some(Domain::Root),
-                },
+                domain: Some(Domain::Root),
             },
             Block {
                 id: 1024,
                 found_at: 1,
                 val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 6 },
-                info: Info::default(),
+                domain: None,
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::Space,
                 bytes: BytesRange { start: 6, end: 7 },
-                info: Info::default(),
+                domain: None,
             },
             Block {
                 id: 1024 * 3,
                 found_at: 3,
                 val: Val::Seq,
                 bytes: BytesRange { start: 7, end: 13 },
-                info: Info::default(),
+                domain: None,
             },
             Block {
                 id: 1024 * 4,
                 found_at: 4,
                 val: Val::Space,
                 bytes: BytesRange { start: 13, end: 14 },
-                info: Info::default(),
+                domain: None,
             },
             Block {
                 id: 1024 * 5,
                 found_at: 5,
                 val: Val::Seq,
                 bytes: BytesRange { start: 14, end: 20 },
-                info: Info::default(),
+                domain: None,
             },
         ];
         assert_eq!(actual, expected);
@@ -323,37 +313,35 @@ mod rows {
                 found_at: 0,
                 val: Val::Root,
                 bytes: BytesRange::empty(0),
-                info: Info {
-                    domain: Some(Domain::Root),
-                },
+                domain: Some(Domain::Root),
             },
             Block {
                 id: 1024,
                 found_at: 1,
                 val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
-                info: Info::default(),
+                domain: None,
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::Colon,
                 bytes: BytesRange { start: 3, end: 4 },
-                info: Info::default(),
+                domain: None,
             },
             Block {
                 id: 1024 * 3,
                 found_at: 3,
                 val: Val::Space,
                 bytes: BytesRange { start: 4, end: 5 },
-                info: Info::default(),
+                domain: None,
             },
             Block {
                 id: 1024 * 4,
                 found_at: 4,
                 val: Val::Seq,
                 bytes: BytesRange { start: 5, end: 7 },
-                info: Info::default(),
+                domain: None,
             },
         ];
         assert_eq!(actual, expected);

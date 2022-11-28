@@ -7,7 +7,7 @@ pub struct Block {
     pub found_at: usize,
     pub val: Val,
     pub bytes: BytesRange,
-    pub info: Info,
+    pub domain: Option<Domain>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
@@ -20,11 +20,6 @@ pub enum Val {
     ExclMark,
     Colon,
     EOL,
-}
-
-#[derive(Debug, PartialEq, Eq, Default)]
-pub struct Info {
-    pub domain: Option<Domain>,
 }
 
 impl Block {
