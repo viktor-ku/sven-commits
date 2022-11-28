@@ -118,7 +118,7 @@ impl Debug for Paper {
 
         writeln!(
             f,
-            "paper: type({}) -> colon({}) -> space({}) -> desc({})",
+            "paper: Type({}) -> Colon({}) -> Space({}) -> Desc({})",
             at(self.kind.found_at),
             at(self.colon.found_at),
             at(self.space.found_at),
@@ -137,7 +137,7 @@ impl Debug for Paper {
                 continue;
             }
             let pencil = self.find_pencil(one.domain);
-            write!(f, "{}({})", one.domain, at(pencil.found_at))?;
+            write!(f, "{:?}({})", one.domain, at(pencil.found_at))?;
             if one.domain != Domain::Desc {
                 write!(f, " -> ")?;
             }
