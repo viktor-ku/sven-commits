@@ -1,7 +1,7 @@
 use super::{bytes_range::BytesRange, CRule, CommitParser};
 use crate::{
     additive::Additive,
-    block::{Block, Info, Kind},
+    block::{Block, Info, Val},
     domain::Domain,
 };
 use anyhow::Result;
@@ -16,7 +16,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
         id: id.stamp(),
         found_at: found_at.stamp(),
         bytes: BytesRange { start: 0, end: 0 },
-        kind: Kind::Root,
+        val: Val::Root,
         info: Info {
             domain: Some(Domain::Root),
         },
@@ -44,7 +44,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 v.push(Block {
                                     id: id.stamp(),
                                     found_at: found_at.stamp(),
-                                    kind: Kind::Seq,
+                                    val: Val::Seq,
                                     bytes: BytesRange {
                                         start: span.start() - word_bytes,
                                         end: span.end() - 1,
@@ -63,7 +63,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                             v.push(Block {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
-                                kind: Kind::OpenBracket,
+                                val: Val::OpenBracket,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
@@ -77,7 +77,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                             v.push(Block {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
-                                kind: Kind::CloseBracket,
+                                val: Val::CloseBracket,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
@@ -91,7 +91,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                             v.push(Block {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
-                                kind: Kind::ExclMark,
+                                val: Val::ExclMark,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
@@ -105,7 +105,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                             v.push(Block {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
-                                kind: Kind::Colon,
+                                val: Val::Colon,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
@@ -119,7 +119,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                             v.push(Block {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
-                                kind: Kind::Space,
+                                val: Val::Space,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
@@ -133,7 +133,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                             v.push(Block {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
-                                kind: Kind::EOL,
+                                val: Val::EOL,
                                 bytes: BytesRange {
                                     start: span.start(),
                                     end: span.end(),
@@ -158,7 +158,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                 v.push(Block {
                     id: id.stamp(),
                     found_at: found_at.stamp(),
-                    kind: Kind::Seq,
+                    val: Val::Seq,
                     bytes: BytesRange {
                         start: token.bytes.end,
                         end: token.bytes.end + word_bytes,
@@ -171,7 +171,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
             None => v.push(Block {
                 id: id.stamp(),
                 found_at: found_at.stamp(),
-                kind: Kind::Seq,
+                val: Val::Seq,
                 bytes: BytesRange {
                     start: 0,
                     end: word_bytes,
@@ -199,7 +199,7 @@ mod rows {
             Block {
                 id: 0,
                 found_at: 0,
-                kind: Kind::Root,
+                val: Val::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
                     domain: Some(Domain::Root),
@@ -209,7 +209,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                kind: Kind::Seq,
+                val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
                 info: Info::default(),
                 source: source.clone(),
@@ -217,7 +217,7 @@ mod rows {
             Block {
                 id: 1024 * 2,
                 found_at: 2,
-                kind: Kind::EOL,
+                val: Val::EOL,
                 bytes: BytesRange { start: 3, end: 4 },
                 info: Info::default(),
                 source: source.clone(),
@@ -234,7 +234,7 @@ mod rows {
             Block {
                 id: 0,
                 found_at: 0,
-                kind: Kind::Root,
+                val: Val::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
                     domain: Some(Domain::Root),
@@ -244,7 +244,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                kind: Kind::Space,
+                val: Val::Space,
                 bytes: BytesRange { start: 0, end: 1 },
                 info: Info::default(),
                 source: source.clone(),
@@ -252,7 +252,7 @@ mod rows {
             Block {
                 id: 1024 * 2,
                 found_at: 2,
-                kind: Kind::Seq,
+                val: Val::Seq,
                 bytes: BytesRange { start: 1, end: 6 },
                 info: Info::default(),
                 source: source.clone(),
@@ -269,7 +269,7 @@ mod rows {
             Block {
                 id: 0,
                 found_at: 0,
-                kind: Kind::Root,
+                val: Val::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
                     domain: Some(Domain::Root),
@@ -279,7 +279,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                kind: Kind::Seq,
+                val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
                 info: Info::default(),
                 source: source.clone(),
@@ -296,7 +296,7 @@ mod rows {
             Block {
                 id: 0,
                 found_at: 0,
-                kind: Kind::Root,
+                val: Val::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
                     domain: Some(Domain::Root),
@@ -306,7 +306,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                kind: Kind::Seq,
+                val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 6 },
                 info: Info::default(),
                 source: source.clone(),
@@ -314,7 +314,7 @@ mod rows {
             Block {
                 id: 1024 * 2,
                 found_at: 2,
-                kind: Kind::Space,
+                val: Val::Space,
                 bytes: BytesRange { start: 6, end: 7 },
                 info: Info::default(),
                 source: source.clone(),
@@ -322,7 +322,7 @@ mod rows {
             Block {
                 id: 1024 * 3,
                 found_at: 3,
-                kind: Kind::Seq,
+                val: Val::Seq,
                 bytes: BytesRange { start: 7, end: 13 },
                 info: Info::default(),
                 source: source.clone(),
@@ -330,7 +330,7 @@ mod rows {
             Block {
                 id: 1024 * 4,
                 found_at: 4,
-                kind: Kind::Space,
+                val: Val::Space,
                 bytes: BytesRange { start: 13, end: 14 },
                 info: Info::default(),
                 source: source.clone(),
@@ -338,7 +338,7 @@ mod rows {
             Block {
                 id: 1024 * 5,
                 found_at: 5,
-                kind: Kind::Seq,
+                val: Val::Seq,
                 bytes: BytesRange { start: 14, end: 20 },
                 info: Info::default(),
                 source: source.clone(),
@@ -355,7 +355,7 @@ mod rows {
             Block {
                 id: 0,
                 found_at: 0,
-                kind: Kind::Root,
+                val: Val::Root,
                 bytes: BytesRange::empty(0),
                 info: Info {
                     domain: Some(Domain::Root),
@@ -365,7 +365,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                kind: Kind::Seq,
+                val: Val::Seq,
                 bytes: BytesRange { start: 0, end: 3 },
                 info: Info::default(),
                 source: source.clone(),
@@ -373,7 +373,7 @@ mod rows {
             Block {
                 id: 1024 * 2,
                 found_at: 2,
-                kind: Kind::Colon,
+                val: Val::Colon,
                 bytes: BytesRange { start: 3, end: 4 },
                 info: Info::default(),
                 source: source.clone(),
@@ -381,7 +381,7 @@ mod rows {
             Block {
                 id: 1024 * 3,
                 found_at: 3,
-                kind: Kind::Space,
+                val: Val::Space,
                 bytes: BytesRange { start: 4, end: 5 },
                 info: Info::default(),
                 source: source.clone(),
@@ -389,7 +389,7 @@ mod rows {
             Block {
                 id: 1024 * 4,
                 found_at: 4,
-                kind: Kind::Seq,
+                val: Val::Seq,
                 bytes: BytesRange { start: 5, end: 7 },
                 info: Info::default(),
                 source: source.clone(),

@@ -1,6 +1,6 @@
 use crate::{
     additive::Additive,
-    block::{self, Block},
+    block::{Block, Val},
     paper::Paper,
 };
 use std::collections::BTreeSet;
@@ -20,18 +20,18 @@ pub fn analyze_header(blocks: &mut BTreeSet<Block>) {
 
     // find first occurences of every paper token, except the desc
     for block in blocks.iter() {
-        match block.kind {
-            block::Kind::Seq => {
+        match block.val {
+            Val::Seq => {
                 if paper.kind.is_missing() {
                     paper.kind.found_at = Some(block.found_at);
                 }
             }
-            block::Kind::Colon => {
+            Val::Colon => {
                 if paper.colon.is_missing() {
                     paper.colon.found_at = Some(block.found_at);
                 }
             }
-            block::Kind::Space => {
+            Val::Space => {
                 if paper.space.is_missing() {
                     paper.space.found_at = Some(block.found_at);
                 }

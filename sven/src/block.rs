@@ -3,24 +3,10 @@ use std::fmt::{Debug, Display};
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Block {
-    /// An id for the block created with a space for inserting other
-    /// blocks in the middle
     pub id: usize,
-
-    /// Actual index by which this block could be found
     pub found_at: usize,
-
-    /// Kind of the block from the general point of view right after the parsing,
-    /// includes e.g. Colon which represents a colon (":"), but it has nothing to do
-    /// with the conventional commit colon in header because it might not be unique in
-    /// the set of blocks, but also it's not necessary represents the actual colon that
-    /// comes after the conventional commit type or scope
-    pub kind: Kind,
-
-    /// Bytes range taken by the block
+    pub val: Val,
     pub bytes: BytesRange,
-
-    /// Actual information about the block in the context of conventional commit
     pub info: Info,
 
     #[cfg(debug_assertions)]
@@ -28,8 +14,7 @@ pub struct Block {
 }
 
 #[derive(Debug, PartialEq, Eq)]
-pub enum Kind {
-    /// Any sequence of any utf8 characters, excluding other kinds of token
+pub enum Val {
     Seq,
     Root,
     Space,
@@ -42,14 +27,10 @@ pub enum Kind {
 
 #[derive(Debug, PartialEq, Eq, Default)]
 pub struct Info {
-    /// If any particular block is identified as a part of conventional commit
-    /// structure then it gets assigned a certain subject within the specification
     pub domain: Option<Domain>,
 }
 
 impl Block {
-    /// Having the original commit you can easily capture the relevant
-    /// str for the current block
     #[inline]
     pub fn capture<'a>(&self, source: &'a str) -> &'a str {
         &source[self.bytes.start..self.bytes.end]
@@ -80,7 +61,7 @@ impl Into<(usize, usize)> for Block {
 }
 
 #[cfg(debug_assertions)]
-impl Display for Kind {
+impl Display for Val {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -102,11 +83,11 @@ impl Display for Kind {
 #[cfg(debug_assertions)]
 impl Display for Block {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        let kind = {
-            let kind = format!("{}", self.kind);
-            let len = kind.len();
+        let val = {
+            let val = format!("{}", self.val);
+            let len = val.len();
             let diff = 12 - len;
-            format!("{}{}", kind, " ".repeat(diff))
+            format!("{}{}", val, " ".repeat(diff))
         };
         let domain = {
             let domain = match self.info.domain {
@@ -125,11 +106,11 @@ impl Display for Block {
         }
         write!(f, " ")?;
 
-        write!(f, "{} {} {:?}", kind, domain, self.bytes)?;
+        write!(f, "{} {} {:?}", val, domain, self.bytes)?;
 
-        match self.kind {
-            Kind::Root => {}
-            Kind::EOL => {
+        match self.val {
+            Val::Root => {}
+            Val::EOL => {
                 write!(f, " \\n")?;
             }
             _ => {
