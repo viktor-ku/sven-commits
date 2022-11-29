@@ -9,6 +9,15 @@ pub fn analyze_header(blocks: &mut BTreeSet<Block>) {
     let mut paper = Paper::new();
     let mut id = Additive::new();
 
+    // Knowing that something is missing, I have to place this something in the right order
+    // amongst other things in the set.
+    //
+    // If it has id it means it is an actual thing in the set; things without an id should
+    // be placed somewhere (missing, misplaced dest).
+    //
+    // We try to sort primarily by the id, if there is no id, we should then pay attention
+    // to the detailed domain.
+
     // find first occurences of every paper token, except the desc
     for block in blocks.iter() {
         match block.val {
