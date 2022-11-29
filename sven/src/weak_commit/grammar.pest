@@ -41,7 +41,7 @@ Tokens = ${
     | TokenOpenBracket | TokenCloseBracket
     | TokenEOL
     | TokenChar
-  )+
+  )*
 }
 
 TokenChar = { ANY }

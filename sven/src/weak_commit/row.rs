@@ -1,16 +1,11 @@
-use super::{
-    bytes_range::BytesRange,
-    parser::{CRule, CommitParser},
-};
+use super::parser::{CRule, CommitParser};
+use crate::bytes::Bytes;
 use pest::Parser;
 
 /// Metadata about each row.
 #[derive(Debug, PartialEq)]
 pub struct Row {
-    /// Consists of two integers indicating the start byte index
-    /// of the row and the end byte index of the row from the start of the
-    /// input.
-    pub bytes: BytesRange,
+    pub bytes: Bytes,
 
     /// The row starting 1.
     pub row: usize,

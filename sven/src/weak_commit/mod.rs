@@ -2,13 +2,10 @@ use self::{
     parse_header::parse_header,
     parser::{CRule, CommitParser},
 };
-use crate::block::Block;
+use crate::{block::Block, bytes::Bytes};
 use anyhow::Result;
 use pest::Parser;
 use std::collections::BTreeSet;
-
-mod bytes_range;
-pub use bytes_range::BytesRange;
 
 pub mod parse_header;
 mod parser;
@@ -41,10 +38,7 @@ impl WeakCommit {
                                     rows.push(Row {
                                         row: row_n,
                                         blank: Row::probe_blank_line(value),
-                                        bytes: BytesRange {
-                                            start: span.start(),
-                                            end: span.end(),
-                                        },
+                                        bytes: Bytes(span.start(), span.end()),
                                     });
                                     row_n += 1;
                                 }
@@ -59,8 +53,8 @@ impl WeakCommit {
 
         let header = match rows.first() {
             Some(row) => {
-                let header_str = &commit[row.bytes.start..row.bytes.end];
-                parse_header(header_str)?
+                let header_str = row.bytes.capture(&commit);
+                parse_header(header_str.expect("could not extract header string"))?
             }
             None => BTreeSet::new(),
         };
@@ -80,7 +74,7 @@ mod producing {
         let expected = vec![Row {
             row: 1,
             blank: 0,
-            bytes: BytesRange { start: 0, end: 13 },
+            bytes: Bytes(0, 13),
         }];
         assert_eq!(actual.rows, expected);
     }
@@ -92,27 +86,27 @@ mod producing {
             Row {
                 row: 1,
                 blank: 0,
-                bytes: BytesRange { start: 0, end: 4 },
+                bytes: Bytes(0, 4),
             },
             Row {
                 row: 2,
                 blank: 1,
-                bytes: BytesRange { start: 4, end: 5 },
+                bytes: Bytes(4, 5),
             },
             Row {
                 row: 3,
                 blank: 0,
-                bytes: BytesRange { start: 5, end: 9 },
+                bytes: Bytes(5, 9),
             },
             Row {
                 row: 4,
                 blank: 1,
-                bytes: BytesRange { start: 9, end: 10 },
+                bytes: Bytes(9, 10),
             },
             Row {
                 row: 5,
                 blank: 0,
-                bytes: BytesRange { start: 10, end: 15 },
+                bytes: Bytes(10, 15),
             },
         ];
         assert_eq!(actual.rows, expected);
@@ -125,12 +119,12 @@ mod producing {
             Row {
                 row: 1,
                 blank: 0,
-                bytes: BytesRange { start: 0, end: 7 },
+                bytes: Bytes(0, 7),
             },
             Row {
                 row: 2,
                 blank: 0,
-                bytes: BytesRange { start: 7, end: 13 },
+                bytes: Bytes(7, 13),
             },
         ];
         assert_eq!(actual.rows, expected);

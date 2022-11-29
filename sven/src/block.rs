@@ -1,4 +1,4 @@
-use crate::{domain::Domain, weak_commit::BytesRange};
+use crate::{bytes::Bytes, domain::Domain};
 use std::fmt::Debug;
 
 #[derive(Debug, PartialEq, Eq)]
@@ -6,13 +6,12 @@ pub struct Block {
     pub id: usize,
     pub found_at: usize,
     pub val: Val,
-    pub bytes: BytesRange,
     pub domain: Option<Domain>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Val {
-    Seq,
+    Seq(Bytes),
     Root,
     Space,
     OpenBracket,
@@ -24,13 +23,11 @@ pub enum Val {
 
 impl Block {
     #[inline]
-    pub fn capture<'a>(&self, source: &'a str) -> &'a str {
-        &source[self.bytes.start..self.bytes.end]
-    }
-
-    #[inline]
-    pub fn total(&self) -> usize {
-        self.bytes.total()
+    pub fn capture<'a>(&self, source: &'a str) -> Option<&'a str> {
+        match self.val {
+            Val::Seq(bytes) => bytes.capture(source),
+            _ => None,
+        }
     }
 }
 
@@ -43,11 +40,5 @@ impl PartialOrd for Block {
 impl Ord for Block {
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
         self.id.cmp(&other.id)
-    }
-}
-
-impl Into<(usize, usize)> for Block {
-    fn into(self) -> (usize, usize) {
-        self.bytes.into()
     }
 }
