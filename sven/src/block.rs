@@ -1,7 +1,7 @@
 use crate::{bytes::Bytes, domain::Domain};
 use std::fmt::Debug;
 
-#[derive(Debug, PartialEq, Eq, Default)]
+#[derive(Debug, PartialEq, Eq)]
 pub struct Block {
     pub id: usize,
     pub found_at: usize,
@@ -38,12 +38,6 @@ impl Block {
             domain: Domain::Root,
             bytes: None,
         }
-    }
-}
-
-impl Default for Val {
-    fn default() -> Self {
-        panic!("choose Val manually")
     }
 }
 
