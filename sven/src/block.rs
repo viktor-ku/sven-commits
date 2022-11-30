@@ -6,7 +6,7 @@ pub struct Block {
     pub id: usize,
     pub found_at: usize,
     pub val: Val,
-    pub domain: Option<Domain>,
+    pub domain: Domain,
     pub bytes: Option<Bytes>,
 }
 
@@ -35,7 +35,7 @@ impl Block {
             id: 0,
             found_at: 0,
             val: Val::Root,
-            domain: Some(Domain::Root),
+            domain: Domain::Root,
             bytes: None,
         }
     }

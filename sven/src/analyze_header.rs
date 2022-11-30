@@ -90,13 +90,5 @@ BREAKING CHANGE: supports many footers
 "###
         .trim_start();
         let actual = with_commit(commit);
-        for one in actual {
-            if one.domain.is_none() {
-                panic!(
-                    "everything should be related to conventional commit {:#?}",
-                    one
-                );
-            }
-        }
     }
 }

@@ -17,7 +17,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
         id: id.stamp(),
         found_at: found_at.stamp(),
         val: Val::Root,
-        domain: Some(Domain::Root),
+        domain: Domain::Root,
         bytes: None,
     }];
 
@@ -48,7 +48,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                         span.start() - word_bytes,
                                         span.end() - 1,
                                     )),
-                                    domain: None,
+                                    domain: Domain::None,
                                 });
                                 word_bytes = 0;
                             }
@@ -61,7 +61,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
                                 val: Val::OpenBracket,
-                                domain: None,
+                                domain: Domain::None,
                                 bytes: Some(span.into()),
                             });
                         }
@@ -70,7 +70,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
                                 val: Val::CloseBracket,
-                                domain: None,
+                                domain: Domain::None,
                                 bytes: Some(span.into()),
                             });
                         }
@@ -79,7 +79,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
                                 val: Val::ExclMark,
-                                domain: None,
+                                domain: Domain::None,
                                 bytes: Some(span.into()),
                             });
                         }
@@ -88,7 +88,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
                                 val: Val::Colon,
-                                domain: None,
+                                domain: Domain::None,
                                 bytes: Some(span.into()),
                             });
                         }
@@ -97,7 +97,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
                                 val: Val::Space,
-                                domain: None,
+                                domain: Domain::None,
                                 bytes: Some(span.into()),
                             });
                         }
@@ -106,7 +106,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 id: id.stamp(),
                                 found_at: found_at.stamp(),
                                 val: Val::EOL,
-                                domain: None,
+                                domain: Domain::None,
                                 bytes: Some(span.into()),
                             });
                         }
@@ -123,7 +123,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
             id: id.stamp(),
             found_at: found_at.stamp(),
             val: Val::Seq,
-            domain: None,
+            domain: Domain::None,
             bytes: Some(Bytes::new(prev, prev + word_bytes)),
         });
     }
@@ -154,7 +154,7 @@ mod rows {
                 id: 1024,
                 found_at: 1,
                 val: Val::EOL,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(0, 1)),
             },
         ];
@@ -171,7 +171,7 @@ mod rows {
                 id: 1024,
                 found_at: 1,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
         ];
@@ -188,14 +188,14 @@ mod rows {
                 id: 1024,
                 found_at: 1,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::EOL,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
             },
         ];
@@ -212,35 +212,35 @@ mod rows {
                 id: 1024,
                 found_at: 1,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(0, 4)),
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::Space,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(4, 5)),
             },
             Block {
                 id: 1024 * 3,
                 found_at: 3,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(5, 9)),
             },
             Block {
                 id: 1024 * 4,
                 found_at: 4,
                 val: Val::Space,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(9, 10)),
             },
             Block {
                 id: 1024 * 5,
                 found_at: 5,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(10, 14)),
             },
         ];
@@ -257,56 +257,56 @@ mod rows {
                 id: 1024,
                 found_at: 1,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::OpenBracket,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
             },
             Block {
                 id: 1024 * 3,
                 found_at: 3,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(4, 7)),
             },
             Block {
                 id: 1024 * 4,
                 found_at: 4,
                 val: Val::CloseBracket,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(7, 8)),
             },
             Block {
                 id: 1024 * 5,
                 found_at: 5,
                 val: Val::ExclMark,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(8, 9)),
             },
             Block {
                 id: 1024 * 6,
                 found_at: 6,
                 val: Val::Colon,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(9, 10)),
             },
             Block {
                 id: 1024 * 7,
                 found_at: 7,
                 val: Val::Space,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(10, 11)),
             },
             Block {
                 id: 1024 * 8,
                 found_at: 8,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(11, 13)),
             },
         ];
@@ -323,28 +323,28 @@ mod rows {
                 id: 1024,
                 found_at: 1,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::Colon,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
             },
             Block {
                 id: 1024 * 3,
                 found_at: 3,
                 val: Val::Space,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(4, 5)),
             },
             Block {
                 id: 1024 * 4,
                 found_at: 4,
                 val: Val::Seq,
-                domain: None,
+                domain: Domain::None,
                 bytes: Some(Bytes::new(5, 9)),
             },
         ];
