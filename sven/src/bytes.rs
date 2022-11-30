@@ -28,6 +28,16 @@ impl Bytes {
             _ => source.get(self.0..self.1),
         }
     }
+
+    #[inline]
+    pub fn start(&self) -> usize {
+        self.0
+    }
+
+    #[inline]
+    pub fn end(&self) -> usize {
+        self.1
+    }
 }
 
 impl Into<Bytes> for (usize, usize) {

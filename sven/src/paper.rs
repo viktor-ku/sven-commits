@@ -1,9 +1,9 @@
-use crate::{domain::Domain, pencil::Pencil};
+use crate::{additive::Additive, domain::Domain, pencil::Pencil};
 use std::{collections::BTreeSet, fmt::Debug};
 
 #[derive(PartialEq, Eq)]
 pub struct Paper {
-    root: Pencil,
+    pub root: Pencil,
     pub kind: Pencil,
     pub colon: Pencil,
     pub space: Pencil,
@@ -19,58 +19,114 @@ impl Paper {
                 found_at: None,
                 next: None,
                 prev: None,
+                missing: false,
+                missing_nth: 1,
+                missing_total: 1,
             },
             kind: Pencil {
                 domain: Domain::Type,
                 found_at: None,
                 next: None,
                 prev: None,
+                missing: true,
+                missing_nth: 1,
+                missing_total: 1,
             },
             colon: Pencil {
                 domain: Domain::Colon,
                 found_at: None,
                 next: None,
                 prev: None,
+                missing: true,
+                missing_nth: 1,
+                missing_total: 1,
             },
             space: Pencil {
                 domain: Domain::Space,
                 found_at: None,
                 next: None,
                 prev: None,
+                missing: true,
+                missing_nth: 1,
+                missing_total: 1,
             },
             desc: Pencil {
                 domain: Domain::Desc,
                 found_at: None,
                 next: None,
                 prev: None,
+                missing: true,
+                missing_nth: 1,
+                missing_total: 1,
             },
         }
     }
 
     pub fn build_map(&mut self) {
-        let mut t: BTreeSet<Pencil> = BTreeSet::new();
-        t.insert(self.root);
-        t.insert(self.kind);
-        t.insert(self.colon);
-        t.insert(self.space);
-        t.insert(self.desc);
+        {
+            let mut t: BTreeSet<Pencil> = BTreeSet::new();
+            t.insert(self.root);
+            t.insert(self.kind);
+            t.insert(self.colon);
+            t.insert(self.space);
+            t.insert(self.desc);
 
-        let mut prev: Option<Domain> = None;
-        let mut next: Option<Domain> = None;
-        for one in t {
-            if let Some(prev_subject) = prev {
-                self.find_pencil_mut(one.domain).prev = Some(prev_subject);
-            }
-            prev = Some(one.domain);
+            let mut prev: Option<Domain> = None;
+            let mut next: Option<Domain> = None;
+            let mut nth = 1;
+            for pencil in t.iter() {
+                match pencil.found_at {
+                    Some(_) => {
+                        nth = 1;
+                    }
+                    None => {
+                        nth += 1;
+                        self.find_pencil_mut(pencil.domain).missing_nth = nth;
+                        self.find_pencil_mut(pencil.domain).found_at =
+                            self.find_pencil(prev.unwrap()).found_at;
+                    }
+                };
 
-            if let Some(next_subject) = next {
-                self.find_pencil_mut(next_subject).next = Some(one.domain);
+                if let Some(prev_subject) = prev {
+                    self.find_pencil_mut(pencil.domain).prev = Some(prev_subject);
+                }
+                prev = Some(pencil.domain);
+
+                if let Some(next_subject) = next {
+                    self.find_pencil_mut(next_subject).next = Some(pencil.domain);
+                }
+                next = Some(pencil.domain);
             }
-            next = Some(one.domain);
+
+            debug_assert!(self.root.prev.is_none());
+            debug_assert!(self.desc.next.is_none());
+        };
+
+        let mut v: Vec<Domain> = Vec::new();
+        let mut next = Some(self.root.domain);
+        while let Some(domain) = next {
+            v.push(domain);
+            next = self.find_pencil(domain).next;
         }
+        v.reverse();
+        let mut total = 1;
+        for domain in v {
+            let mut pencil = self.find_pencil_mut(domain);
 
-        debug_assert!(self.root.prev.is_none());
-        debug_assert!(self.desc.next.is_none());
+            if pencil.missing {
+                if total == 1 {
+                    total = pencil.missing_nth;
+                }
+
+                let nth = pencil.missing_nth;
+                let base_id = pencil.found_at.unwrap();
+                let add = 1024 / total * (nth - 1);
+                pencil.found_at = Some(base_id + add);
+                pencil.missing_total = total;
+            } else {
+                total = 1;
+            }
+        }
     }
 
     #[inline]
@@ -116,12 +172,25 @@ impl Debug for Paper {
             }
         }
 
+        #[inline]
+        fn missing<'a>(is: bool) -> &'a str {
+            if is {
+                "-"
+            } else {
+                "+"
+            }
+        }
+
         writeln!(
             f,
-            "paper: Type({}) -> Colon({}) -> Space({}) -> Desc({})",
+            "paper: {}Type({}) -> {}Colon({}) -> {}Space({}) -> {}Desc({})",
+            missing(self.kind.missing),
             at(self.kind.found_at),
+            missing(self.colon.missing),
             at(self.colon.found_at),
+            missing(self.space.missing),
             at(self.space.found_at),
+            missing(self.desc.missing),
             at(self.desc.found_at),
         )?;
 
@@ -137,7 +206,13 @@ impl Debug for Paper {
                 continue;
             }
             let pencil = self.find_pencil(one.domain);
-            write!(f, "{:?}({})", one.domain, at(pencil.found_at))?;
+            write!(
+                f,
+                "{}{:?}({})",
+                missing(one.missing),
+                one.domain,
+                at(pencil.found_at)
+            )?;
             if one.domain != Domain::Desc {
                 write!(f, " -> ")?;
             }

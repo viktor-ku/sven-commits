@@ -1,12 +1,21 @@
 use crate::domain::Domain;
 use std::{cmp::Ordering, fmt::Debug};
 
-#[derive(Debug, PartialEq, Eq, Clone, Copy, PartialOrd)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub struct Pencil {
     pub domain: Domain,
     pub found_at: Option<usize>,
     pub next: Option<Domain>,
     pub prev: Option<Domain>,
+    pub missing: bool,
+    pub missing_nth: usize,
+    pub missing_total: usize,
+}
+
+impl PartialOrd for Pencil {
+    fn partial_cmp(&self, other: &Self) -> Option<Ordering> {
+        Some(self.cmp(&other))
+    }
 }
 
 impl Ord for Pencil {
@@ -21,6 +30,6 @@ impl Ord for Pencil {
 impl Pencil {
     #[inline]
     pub fn is_missing(&self) -> bool {
-        self.found_at.is_none()
+        self.missing
     }
 }
