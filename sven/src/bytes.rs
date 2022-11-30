@@ -1,3 +1,4 @@
+use pest::Span;
 use std::ops::{Range, RangeFrom};
 
 #[derive(Debug, PartialEq, Eq, PartialOrd, Ord, Clone, Copy)]
@@ -57,5 +58,12 @@ impl Into<RangeFrom<usize>> for Bytes {
     #[inline]
     fn into(self) -> RangeFrom<usize> {
         RangeFrom { start: self.0 }
+    }
+}
+
+impl Into<Bytes> for Span<'_> {
+    #[inline]
+    fn into(self) -> Bytes {
+        Bytes::new(self.start(), self.end())
     }
 }

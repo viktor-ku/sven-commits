@@ -18,6 +18,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
         found_at: found_at.stamp(),
         val: Val::Root,
         domain: Some(Domain::Root),
+        bytes: None,
     }];
 
     let rules = CommitParser::parse(CRule::Tokens, header)?;
@@ -42,7 +43,8 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 v.push(Block {
                                     id: id.stamp(),
                                     found_at: found_at.stamp(),
-                                    val: Val::Seq(Bytes::new(
+                                    val: Val::Seq,
+                                    bytes: Some(Bytes::new(
                                         span.start() - word_bytes,
                                         span.end() - 1,
                                     )),
@@ -60,6 +62,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 found_at: found_at.stamp(),
                                 val: Val::OpenBracket,
                                 domain: None,
+                                bytes: Some(span.into()),
                             });
                         }
                         CRule::TokenCloseBracket => {
@@ -68,6 +71,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 found_at: found_at.stamp(),
                                 val: Val::CloseBracket,
                                 domain: None,
+                                bytes: Some(span.into()),
                             });
                         }
                         CRule::TokenExclMark => {
@@ -76,6 +80,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 found_at: found_at.stamp(),
                                 val: Val::ExclMark,
                                 domain: None,
+                                bytes: Some(span.into()),
                             });
                         }
                         CRule::TokenColon => {
@@ -84,6 +89,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 found_at: found_at.stamp(),
                                 val: Val::Colon,
                                 domain: None,
+                                bytes: Some(span.into()),
                             });
                         }
                         CRule::TokenWhitespace => {
@@ -92,6 +98,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 found_at: found_at.stamp(),
                                 val: Val::Space,
                                 domain: None,
+                                bytes: Some(span.into()),
                             });
                         }
                         CRule::TokenEOL => {
@@ -100,6 +107,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 found_at: found_at.stamp(),
                                 val: Val::EOL,
                                 domain: None,
+                                bytes: Some(span.into()),
                             });
                         }
                         _ => {}
@@ -114,8 +122,9 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
         v.push(Block {
             id: id.stamp(),
             found_at: found_at.stamp(),
-            val: Val::Seq(Bytes::new(prev, prev + word_bytes)),
+            val: Val::Seq,
             domain: None,
+            bytes: Some(Bytes::new(prev, prev + word_bytes)),
         });
     }
 
@@ -131,12 +140,7 @@ mod rows {
     fn empty() {
         let source = String::from("");
         let actual = Vec::from_iter(parse_header(&source).unwrap());
-        let expected = vec![Block {
-            id: 0,
-            found_at: 0,
-            val: Val::Root,
-            domain: Some(Domain::Root),
-        }];
+        let expected = vec![Block::root()];
         assert_eq!(actual, expected);
     }
 
@@ -145,17 +149,13 @@ mod rows {
         let source = String::from("\n");
         let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
-            Block {
-                id: 0,
-                found_at: 0,
-                val: Val::Root,
-                domain: Some(Domain::Root),
-            },
+            Block::root(),
             Block {
                 id: 1024,
                 found_at: 1,
                 val: Val::EOL,
                 domain: None,
+                bytes: Some(Bytes::new(0, 1)),
             },
         ];
         assert_eq!(actual, expected);
@@ -166,17 +166,13 @@ mod rows {
         let source = String::from("one");
         let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
-            Block {
-                id: 0,
-                found_at: 0,
-                val: Val::Root,
-                domain: Some(Domain::Root),
-            },
+            Block::root(),
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes::new(0, 3)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(0, 3)),
             },
         ];
         assert_eq!(actual, expected);
@@ -187,23 +183,20 @@ mod rows {
         let source = String::from("one\n");
         let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
-            Block {
-                id: 0,
-                found_at: 0,
-                val: Val::Root,
-                domain: Some(Domain::Root),
-            },
+            Block::root(),
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes::new(0, 3)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(0, 3)),
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::EOL,
                 domain: None,
+                bytes: Some(Bytes::new(3, 4)),
             },
         ];
         assert_eq!(actual, expected);
@@ -214,41 +207,41 @@ mod rows {
         let source = String::from("just some text");
         let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
-            Block {
-                id: 0,
-                found_at: 0,
-                val: Val::Root,
-                domain: Some(Domain::Root),
-            },
+            Block::root(),
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes::new(0, 4)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(0, 4)),
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::Space,
                 domain: None,
+                bytes: Some(Bytes::new(4, 5)),
             },
             Block {
                 id: 1024 * 3,
                 found_at: 3,
-                val: Val::Seq(Bytes::new(5, 9)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(5, 9)),
             },
             Block {
                 id: 1024 * 4,
                 found_at: 4,
                 val: Val::Space,
                 domain: None,
+                bytes: Some(Bytes::new(9, 10)),
             },
             Block {
                 id: 1024 * 5,
                 found_at: 5,
-                val: Val::Seq(Bytes::new(10, 14)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(10, 14)),
             },
         ];
         assert_eq!(actual, expected);
@@ -259,59 +252,62 @@ mod rows {
         let source = String::from("fix(app)!: me");
         let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
-            Block {
-                id: 0,
-                found_at: 0,
-                val: Val::Root,
-                domain: Some(Domain::Root),
-            },
+            Block::root(),
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes::new(0, 3)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(0, 3)),
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::OpenBracket,
                 domain: None,
+                bytes: Some(Bytes::new(3, 4)),
             },
             Block {
                 id: 1024 * 3,
                 found_at: 3,
-                val: Val::Seq(Bytes::new(4, 7)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(4, 7)),
             },
             Block {
                 id: 1024 * 4,
                 found_at: 4,
                 val: Val::CloseBracket,
                 domain: None,
+                bytes: Some(Bytes::new(7, 8)),
             },
             Block {
                 id: 1024 * 5,
                 found_at: 5,
                 val: Val::ExclMark,
                 domain: None,
+                bytes: Some(Bytes::new(8, 9)),
             },
             Block {
                 id: 1024 * 6,
                 found_at: 6,
                 val: Val::Colon,
                 domain: None,
+                bytes: Some(Bytes::new(9, 10)),
             },
             Block {
                 id: 1024 * 7,
                 found_at: 7,
                 val: Val::Space,
                 domain: None,
+                bytes: Some(Bytes::new(10, 11)),
             },
             Block {
                 id: 1024 * 8,
                 found_at: 8,
-                val: Val::Seq(Bytes::new(11, 13)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(11, 13)),
             },
         ];
         assert_eq!(actual, expected);
@@ -322,35 +318,34 @@ mod rows {
         let source = String::from("fix: да");
         let actual = Vec::from_iter(parse_header(&source).unwrap());
         let expected = vec![
-            Block {
-                id: 0,
-                found_at: 0,
-                val: Val::Root,
-                domain: Some(Domain::Root),
-            },
+            Block::root(),
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes::new(0, 3)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(0, 3)),
             },
             Block {
                 id: 1024 * 2,
                 found_at: 2,
                 val: Val::Colon,
                 domain: None,
+                bytes: Some(Bytes::new(3, 4)),
             },
             Block {
                 id: 1024 * 3,
                 found_at: 3,
                 val: Val::Space,
                 domain: None,
+                bytes: Some(Bytes::new(4, 5)),
             },
             Block {
                 id: 1024 * 4,
                 found_at: 4,
-                val: Val::Seq(Bytes::new(5, 9)),
+                val: Val::Seq,
                 domain: None,
+                bytes: Some(Bytes::new(5, 9)),
             },
         ];
         assert_eq!(actual, expected);

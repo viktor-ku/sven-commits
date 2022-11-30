@@ -21,7 +21,7 @@ pub fn analyze_header(blocks: &mut BTreeSet<Block>) {
     // find first occurences of every paper token, except the desc
     for block in blocks.iter() {
         match block.val {
-            Val::Seq(_) => {
+            Val::Seq => {
                 if paper.kind.is_missing() {
                     paper.kind.found_at = Some(block.found_at);
                 }

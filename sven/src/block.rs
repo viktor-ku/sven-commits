@@ -1,18 +1,20 @@
 use crate::{bytes::Bytes, domain::Domain};
 use std::fmt::Debug;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Default)]
 pub struct Block {
     pub id: usize,
     pub found_at: usize,
     pub val: Val,
     pub domain: Option<Domain>,
+    pub bytes: Option<Bytes>,
 }
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum Val {
-    Seq(Bytes),
     Root,
+    None,
+    Seq,
     Space,
     OpenBracket,
     CloseBracket,
@@ -23,11 +25,25 @@ pub enum Val {
 
 impl Block {
     #[inline]
-    pub fn capture<'a>(&self, source: &'a str) -> Option<&'a str> {
-        match self.val {
-            Val::Seq(bytes) => bytes.capture(source),
-            _ => None,
+    pub fn capture<'capture>(&self, source: &'capture str) -> Option<&'capture str> {
+        self.bytes.map(|bytes| bytes.capture(source)).flatten()
+    }
+
+    #[inline]
+    pub fn root() -> Self {
+        Self {
+            id: 0,
+            found_at: 0,
+            val: Val::Root,
+            domain: Some(Domain::Root),
+            bytes: None,
         }
+    }
+}
+
+impl Default for Val {
+    fn default() -> Self {
+        panic!("choose Val manually")
     }
 }
 
