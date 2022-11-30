@@ -42,7 +42,10 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                                 v.push(Block {
                                     id: id.stamp(),
                                     found_at: found_at.stamp(),
-                                    val: Val::Seq(Bytes(span.start() - word_bytes, span.end() - 1)),
+                                    val: Val::Seq(Bytes::new(
+                                        span.start() - word_bytes,
+                                        span.end() - 1,
+                                    )),
                                     domain: None,
                                 });
                                 word_bytes = 0;
@@ -111,7 +114,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
         v.push(Block {
             id: id.stamp(),
             found_at: found_at.stamp(),
-            val: Val::Seq(Bytes(prev, prev + word_bytes)),
+            val: Val::Seq(Bytes::new(prev, prev + word_bytes)),
             domain: None,
         });
     }
@@ -172,7 +175,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes(0, 3)),
+                val: Val::Seq(Bytes::new(0, 3)),
                 domain: None,
             },
         ];
@@ -193,7 +196,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes(0, 3)),
+                val: Val::Seq(Bytes::new(0, 3)),
                 domain: None,
             },
             Block {
@@ -220,7 +223,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes(0, 4)),
+                val: Val::Seq(Bytes::new(0, 4)),
                 domain: None,
             },
             Block {
@@ -232,7 +235,7 @@ mod rows {
             Block {
                 id: 1024 * 3,
                 found_at: 3,
-                val: Val::Seq(Bytes(5, 9)),
+                val: Val::Seq(Bytes::new(5, 9)),
                 domain: None,
             },
             Block {
@@ -244,7 +247,7 @@ mod rows {
             Block {
                 id: 1024 * 5,
                 found_at: 5,
-                val: Val::Seq(Bytes(10, 14)),
+                val: Val::Seq(Bytes::new(10, 14)),
                 domain: None,
             },
         ];
@@ -265,7 +268,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes(0, 3)),
+                val: Val::Seq(Bytes::new(0, 3)),
                 domain: None,
             },
             Block {
@@ -277,7 +280,7 @@ mod rows {
             Block {
                 id: 1024 * 3,
                 found_at: 3,
-                val: Val::Seq(Bytes(4, 7)),
+                val: Val::Seq(Bytes::new(4, 7)),
                 domain: None,
             },
             Block {
@@ -307,7 +310,7 @@ mod rows {
             Block {
                 id: 1024 * 8,
                 found_at: 8,
-                val: Val::Seq(Bytes(11, 13)),
+                val: Val::Seq(Bytes::new(11, 13)),
                 domain: None,
             },
         ];
@@ -328,7 +331,7 @@ mod rows {
             Block {
                 id: 1024,
                 found_at: 1,
-                val: Val::Seq(Bytes(0, 3)),
+                val: Val::Seq(Bytes::new(0, 3)),
                 domain: None,
             },
             Block {
@@ -346,7 +349,7 @@ mod rows {
             Block {
                 id: 1024 * 4,
                 found_at: 4,
-                val: Val::Seq(Bytes(5, 9)),
+                val: Val::Seq(Bytes::new(5, 9)),
                 domain: None,
             },
         ];

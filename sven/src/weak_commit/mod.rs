@@ -38,7 +38,7 @@ impl WeakCommit {
                                     rows.push(Row {
                                         row: row_n,
                                         blank: Row::probe_blank_line(value),
-                                        bytes: Bytes(span.start(), span.end()),
+                                        bytes: Bytes::new(span.start(), span.end()),
                                     });
                                     row_n += 1;
                                 }
@@ -74,7 +74,7 @@ mod producing {
         let expected = vec![Row {
             row: 1,
             blank: 0,
-            bytes: Bytes(0, 13),
+            bytes: Bytes::new(0, 13),
         }];
         assert_eq!(actual.rows, expected);
     }
@@ -86,27 +86,27 @@ mod producing {
             Row {
                 row: 1,
                 blank: 0,
-                bytes: Bytes(0, 4),
+                bytes: Bytes::new(0, 4),
             },
             Row {
                 row: 2,
                 blank: 1,
-                bytes: Bytes(4, 5),
+                bytes: Bytes::new(4, 5),
             },
             Row {
                 row: 3,
                 blank: 0,
-                bytes: Bytes(5, 9),
+                bytes: Bytes::new(5, 9),
             },
             Row {
                 row: 4,
                 blank: 1,
-                bytes: Bytes(9, 10),
+                bytes: Bytes::new(9, 10),
             },
             Row {
                 row: 5,
                 blank: 0,
-                bytes: Bytes(10, 15),
+                bytes: Bytes::new(10, 15),
             },
         ];
         assert_eq!(actual.rows, expected);
@@ -119,12 +119,12 @@ mod producing {
             Row {
                 row: 1,
                 blank: 0,
-                bytes: Bytes(0, 7),
+                bytes: Bytes::new(0, 7),
             },
             Row {
                 row: 2,
                 blank: 0,
-                bytes: Bytes(7, 13),
+                bytes: Bytes::new(7, 13),
             },
         ];
         assert_eq!(actual.rows, expected);
