@@ -3,7 +3,7 @@ use std::fmt::Debug;
 
 #[derive(Debug, PartialEq, Eq)]
 pub struct Block {
-    pub id: usize,
+    pub id: Option<usize>,
     pub found_at: usize,
     pub val: Val,
     pub domain: Domain,
@@ -32,7 +32,7 @@ impl Block {
     #[inline]
     pub fn root() -> Self {
         Self {
-            id: 0,
+            id: Some(0),
             found_at: 0,
             val: Val::Root,
             domain: Domain::Root,
