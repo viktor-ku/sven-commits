@@ -40,13 +40,18 @@ impl Block {
 }
 
 impl PartialOrd for Block {
+    #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.id.cmp(&other.id))
+        Some(self.cmp(&other))
     }
 }
 
 impl Ord for Block {
+    #[inline]
     fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        self.id.cmp(&other.id)
+        match (self.id, other.id) {
+            (Some(me_id), Some(other_id)) => me_id.cmp(&other_id),
+            _ => self.domain.cmp(&other.domain),
+        }
     }
 }
