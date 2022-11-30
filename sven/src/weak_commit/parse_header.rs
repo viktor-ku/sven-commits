@@ -11,11 +11,9 @@ use std::collections::BTreeSet;
 
 pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
     let mut word_bytes = 0;
-    let mut found_at = Additive::new();
     let mut id = Additive { step: 1024, val: 0 };
     let mut v = vec![Block {
         id: Some(id.stamp()),
-        found_at: found_at.stamp(),
         val: Val::Root,
         domain: Domain::Root,
         bytes: None,
@@ -42,7 +40,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                             if word_bytes > 0 {
                                 v.push(Block {
                                     id: Some(id.stamp()),
-                                    found_at: found_at.stamp(),
                                     val: Val::Seq,
                                     bytes: Some(Bytes::new(
                                         span.start() - word_bytes,
@@ -59,7 +56,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                         CRule::TokenOpenBracket => {
                             v.push(Block {
                                 id: Some(id.stamp()),
-                                found_at: found_at.stamp(),
                                 val: Val::OpenBracket,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
@@ -68,7 +64,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                         CRule::TokenCloseBracket => {
                             v.push(Block {
                                 id: Some(id.stamp()),
-                                found_at: found_at.stamp(),
                                 val: Val::CloseBracket,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
@@ -77,7 +72,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                         CRule::TokenExclMark => {
                             v.push(Block {
                                 id: Some(id.stamp()),
-                                found_at: found_at.stamp(),
                                 val: Val::ExclMark,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
@@ -86,7 +80,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                         CRule::TokenColon => {
                             v.push(Block {
                                 id: Some(id.stamp()),
-                                found_at: found_at.stamp(),
                                 val: Val::Colon,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
@@ -95,7 +88,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                         CRule::TokenWhitespace => {
                             v.push(Block {
                                 id: Some(id.stamp()),
-                                found_at: found_at.stamp(),
                                 val: Val::Space,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
@@ -104,7 +96,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
                         CRule::TokenEOL => {
                             v.push(Block {
                                 id: Some(id.stamp()),
-                                found_at: found_at.stamp(),
                                 val: Val::EOL,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
@@ -121,7 +112,6 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
     if word_bytes > 0 {
         v.push(Block {
             id: Some(id.stamp()),
-            found_at: found_at.stamp(),
             val: Val::Seq,
             domain: Domain::None,
             bytes: Some(Bytes::new(prev, prev + word_bytes)),
@@ -152,7 +142,6 @@ mod rows {
             Block::root(),
             Block {
                 id: Some(1024),
-                found_at: 1,
                 val: Val::EOL,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 1)),
@@ -169,7 +158,6 @@ mod rows {
             Block::root(),
             Block {
                 id: Some(1024),
-                found_at: 1,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
@@ -186,14 +174,12 @@ mod rows {
             Block::root(),
             Block {
                 id: Some(1024),
-                found_at: 1,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
             Block {
                 id: Some(1024 * 2),
-                found_at: 2,
                 val: Val::EOL,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
@@ -210,35 +196,30 @@ mod rows {
             Block::root(),
             Block {
                 id: Some(1024),
-                found_at: 1,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 4)),
             },
             Block {
                 id: Some(1024 * 2),
-                found_at: 2,
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(4, 5)),
             },
             Block {
                 id: Some(1024 * 3),
-                found_at: 3,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(5, 9)),
             },
             Block {
                 id: Some(1024 * 4),
-                found_at: 4,
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(9, 10)),
             },
             Block {
                 id: Some(1024 * 5),
-                found_at: 5,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(10, 14)),
@@ -255,56 +236,48 @@ mod rows {
             Block::root(),
             Block {
                 id: Some(1024),
-                found_at: 1,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
             Block {
                 id: Some(1024 * 2),
-                found_at: 2,
                 val: Val::OpenBracket,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
             },
             Block {
                 id: Some(1024 * 3),
-                found_at: 3,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(4, 7)),
             },
             Block {
                 id: Some(1024 * 4),
-                found_at: 4,
                 val: Val::CloseBracket,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(7, 8)),
             },
             Block {
                 id: Some(1024 * 5),
-                found_at: 5,
                 val: Val::ExclMark,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(8, 9)),
             },
             Block {
                 id: Some(1024 * 6),
-                found_at: 6,
                 val: Val::Colon,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(9, 10)),
             },
             Block {
                 id: Some(1024 * 7),
-                found_at: 7,
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(10, 11)),
             },
             Block {
                 id: Some(1024 * 8),
-                found_at: 8,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(11, 13)),
@@ -321,28 +294,24 @@ mod rows {
             Block::root(),
             Block {
                 id: Some(1024),
-                found_at: 1,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
             Block {
                 id: Some(1024 * 2),
-                found_at: 2,
                 val: Val::Colon,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
             },
             Block {
                 id: Some(1024 * 3),
-                found_at: 3,
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(4, 5)),
             },
             Block {
                 id: Some(1024 * 4),
-                found_at: 4,
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(5, 9)),

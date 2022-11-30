@@ -6,61 +6,7 @@ use crate::{
 use std::collections::BTreeSet;
 
 pub fn analyze_header(blocks: &mut BTreeSet<Block>) {
-    let mut paper = Paper::new();
-    let mut id = Additive::new();
-
-    // Knowing that something is missing, I have to place this something in the right order
-    // amongst other things in the set.
-    //
-    // If it has id it means it is an actual thing in the set; things without an id should
-    // be placed somewhere (missing, misplaced dest).
-    //
-    // We try to sort primarily by the id, if there is no id, we should then pay attention
-    // to the detailed domain.
-
-    // find first occurences of every paper token, except the desc
-    for block in blocks.iter() {
-        match block.val {
-            Val::Seq => {
-                if paper.kind.is_missing() {
-                    paper.kind.found_at = Some(block.found_at);
-                }
-            }
-            Val::Colon => {
-                if paper.colon.is_missing() {
-                    paper.colon.found_at = Some(block.found_at);
-                }
-            }
-            Val::Space => {
-                if paper.space.is_missing() {
-                    paper.space.found_at = Some(block.found_at);
-                }
-            }
-            _ => {}
-        }
-    }
-    // this is our first attempt at figuring out where the desc starts, that is
-    // after the at most far token we found + 1
-    let desc_start = [
-        paper.kind.found_at,
-        paper.colon.found_at,
-        paper.space.found_at,
-        paper.desc.found_at,
-    ]
-    .iter()
-    .flatten()
-    .max()
-    .map(|x| x + 1);
-    match desc_start {
-        Some(desc_start) => {
-            paper.desc.found_at = Some(desc_start);
-        }
-        None => {}
-    };
-
-    paper.build_map();
-
-    println!("{:#?}", paper);
+    todo!()
 }
 
 #[cfg(test)]
