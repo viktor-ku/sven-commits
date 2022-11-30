@@ -7,9 +7,8 @@ use crate::{
 };
 use anyhow::Result;
 use pest::Parser;
-use std::collections::BTreeSet;
 
-pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
+pub fn parse_header(header: &str) -> Result<Vec<Block>> {
     let mut word_bytes = 0;
     let mut id = Additive { step: 1024, val: 0 };
     let mut v = vec![Block {
@@ -118,7 +117,7 @@ pub fn parse_header(header: &str) -> Result<BTreeSet<Block>> {
         });
     }
 
-    Ok(BTreeSet::from_iter(v.into_iter()))
+    Ok(v)
 }
 
 #[cfg(test)]
@@ -129,7 +128,7 @@ mod rows {
     #[test]
     fn empty() {
         let source = String::from("");
-        let actual = Vec::from_iter(parse_header(&source).unwrap());
+        let actual = parse_header(&source).unwrap();
         let expected = vec![Block::root()];
         assert_eq!(actual, expected);
     }
@@ -137,7 +136,7 @@ mod rows {
     #[test]
     fn eol() {
         let source = String::from("\n");
-        let actual = Vec::from_iter(parse_header(&source).unwrap());
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Block::root(),
             Block {
@@ -153,7 +152,7 @@ mod rows {
     #[test]
     fn one_word() {
         let source = String::from("one");
-        let actual = Vec::from_iter(parse_header(&source).unwrap());
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Block::root(),
             Block {
@@ -169,7 +168,7 @@ mod rows {
     #[test]
     fn one_word_and_eol() {
         let source = String::from("one\n");
-        let actual = Vec::from_iter(parse_header(&source).unwrap());
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Block::root(),
             Block {
@@ -191,7 +190,7 @@ mod rows {
     #[test]
     fn text() {
         let source = String::from("just some text");
-        let actual = Vec::from_iter(parse_header(&source).unwrap());
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Block::root(),
             Block {
@@ -231,7 +230,7 @@ mod rows {
     #[test]
     fn commit() {
         let source = String::from("fix(app)!: me");
-        let actual = Vec::from_iter(parse_header(&source).unwrap());
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Block::root(),
             Block {
@@ -289,7 +288,7 @@ mod rows {
     #[test]
     fn utf8() {
         let source = String::from("fix: да");
-        let actual = Vec::from_iter(parse_header(&source).unwrap());
+        let actual = parse_header(&source).unwrap();
         let expected = vec![
             Block::root(),
             Block {

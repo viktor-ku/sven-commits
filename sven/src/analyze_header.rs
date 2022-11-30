@@ -3,9 +3,8 @@ use crate::{
     block::{Block, Val},
     paper::Paper,
 };
-use std::collections::BTreeSet;
 
-pub fn analyze_header(blocks: &mut BTreeSet<Block>) {
+pub fn analyze_header(blocks: &mut Vec<Block>) {
     todo!()
 }
 
