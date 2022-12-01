@@ -16,7 +16,7 @@ impl Paper {
         Self {
             root: Pencil {
                 domain: Domain::Root,
-                found_at: None,
+                found_at: Some(0),
                 next: None,
                 prev: None,
                 missing: false,

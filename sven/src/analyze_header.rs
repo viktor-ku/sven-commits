@@ -8,8 +8,7 @@ use crate::{
 
 pub fn analyze_header(blocks: &mut Vec<Block>) {
     let mut paper = Paper::new();
-    paper.root.found_at = blocks.first().unwrap().id;
-    let mut desc_start_i = 0;
+    let mut desc_start_i = 1;
 
     for (i, block) in blocks.iter_mut().enumerate() {
         match block.val {
@@ -121,6 +120,23 @@ mod tests {
     mod missing {
         use super::*;
         use pretty_assertions::assert_eq;
+
+        #[test]
+        fn all() {
+            let commit = "";
+            let actual = with_commit(commit);
+
+            let f = {
+                let mut f = BlockFactory::new();
+                f.kind_missing(0, 204)
+                    .colon_missing(0, 408)
+                    .space_missing(0, 612)
+                    .desc_missing(0, 816);
+                f
+            };
+
+            assert_eq!(f.blocks, actual);
+        }
 
         #[test]
         fn kind() {

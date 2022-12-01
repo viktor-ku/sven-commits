@@ -55,7 +55,7 @@ impl WeakCommit {
                 let header_str = row.bytes.capture(&commit);
                 parse_header(header_str.expect("could not extract header string"))?
             }
-            None => Vec::new(),
+            None => parse_header("")?,
         };
 
         Ok(Self { rows, header })
