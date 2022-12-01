@@ -1,7 +1,7 @@
 use crate::{bytes::Bytes, domain::Domain};
 use std::fmt::Debug;
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone)]
 pub struct Block {
     pub id: Option<usize>,
     pub val: Val,
@@ -9,7 +9,7 @@ pub struct Block {
     pub bytes: Option<Bytes>,
 }
 
-#[derive(Debug, PartialEq, Eq)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy)]
 pub enum Val {
     Root,
     None,

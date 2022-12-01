@@ -22,6 +22,11 @@ impl Bytes {
     }
 
     #[inline]
+    pub fn single(start: usize) -> Self {
+        Self::new(start, start + 1)
+    }
+
+    #[inline]
     pub fn capture<'capture>(&self, source: &'capture str) -> Option<&'capture str> {
         match self.total() {
             0 => None,

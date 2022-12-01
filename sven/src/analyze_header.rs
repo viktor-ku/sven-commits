@@ -99,7 +99,7 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::{bytes::Bytes, weak_commit::WeakCommit};
+    use crate::{block_factory::BlockFactory, weak_commit::WeakCommit};
     use pretty_assertions::assert_eq;
 
     #[inline]
@@ -111,8 +111,6 @@ mod tests {
     }
 
     mod missing {
-        use crate::domain::Domain;
-
         use super::*;
         use pretty_assertions::assert_eq;
 
@@ -120,20 +118,14 @@ mod tests {
         fn colon() {
             let commit = "fix me";
             let actual = with_commit(commit);
-            assert_eq!(actual[2].domain, Domain::Colon);
-        }
 
-        #[test]
-        fn colon_2() {
-            let commit = "fix";
-            let actual = with_commit(commit);
-            assert_eq!(actual[2].domain, Domain::Colon);
-            assert_eq!(1, 2);
-        }
-    }
+            let f = {
+                let mut f = BlockFactory::new();
+                f.kind(1, "fix").missing_colon(512).space(2).desc(3, "me");
+                f
+            };
 
-    #[test]
-    fn perfect_reference() {
-        let commit = "fix(refs)!: a simple fix";
+            assert_eq!(f.blocks, actual);
+        }
     }
 }

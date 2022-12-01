@@ -1,3 +1,4 @@
+#[derive(Debug, Clone, Copy)]
 pub struct Additive {
     pub val: usize,
     pub step: usize,

@@ -6,6 +6,7 @@ mod analyze;
 mod analyze_header;
 mod at;
 mod block;
+mod block_factory;
 mod bytes;
 mod conventional_commit;
 mod domain;
