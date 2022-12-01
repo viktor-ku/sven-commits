@@ -113,4 +113,15 @@ impl BlockFactory {
 
         self
     }
+
+    pub fn kind_missing(&mut self, base: usize, add: usize) -> &mut Self {
+        self.blocks.push(Block {
+            id: Some(base * 1024 + add),
+            val: Val::Seq,
+            domain: Domain::Type,
+            bytes: None,
+        });
+
+        self
+    }
 }

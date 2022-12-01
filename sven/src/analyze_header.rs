@@ -65,6 +65,14 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
 
     paper.build_map();
 
+    if paper.kind.is_missing() {
+        blocks.push(Block {
+            id: paper.kind.found_at,
+            val: Val::Seq,
+            domain: Domain::Type,
+            bytes: None,
+        });
+    }
     if paper.colon.is_missing() {
         blocks.push(Block {
             id: paper.colon.found_at,
@@ -115,6 +123,23 @@ mod tests {
         use pretty_assertions::assert_eq;
 
         #[test]
+        fn kind() {
+            let commit = ": ";
+            let actual = with_commit(commit);
+
+            let f = {
+                let mut f = BlockFactory::new();
+                f.kind_missing(0, 512)
+                    .colon(1)
+                    .space(2)
+                    .desc_missing(2, 512);
+                f
+            };
+
+            assert_eq!(f.blocks, actual);
+        }
+
+        #[test]
         fn space() {
             let commit = "type:desc";
             let actual = with_commit(commit);
@@ -138,10 +163,7 @@ mod tests {
 
             let f = {
                 let mut f = BlockFactory::new();
-                f.kind(1, "type")
-                    .colon(2)
-                    .space(3)
-                    .desc_missing(3, 512);
+                f.kind(1, "type").colon(2).space(3).desc_missing(3, 512);
                 f
             };
 
