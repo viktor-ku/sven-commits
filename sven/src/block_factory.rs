@@ -1,5 +1,5 @@
 use crate::{
-    block::{Block, Val},
+    block::{Block, Status, Val},
     bytes::Bytes,
     domain::Domain,
 };
@@ -19,6 +19,7 @@ impl BlockFactory {
                 val: Val::Root,
                 bytes: None,
                 domain: Domain::Root,
+                status: Status::Settled,
             }],
         }
     }
@@ -31,6 +32,7 @@ impl BlockFactory {
             val: Val::Seq,
             domain: Domain::Type,
             bytes: Some(Bytes::new(self.end, self.end + val_bytes_len)),
+            status: Status::Settled,
         });
 
         self.end += val_bytes_len;
@@ -46,6 +48,7 @@ impl BlockFactory {
             val: Val::Colon,
             domain: Domain::Colon,
             bytes: Some(bytes),
+            status: Status::Settled,
         });
 
         self
@@ -60,6 +63,7 @@ impl BlockFactory {
             val: Val::Space,
             domain: Domain::Space,
             bytes: Some(bytes),
+            status: Status::Settled,
         });
 
         self
@@ -73,6 +77,7 @@ impl BlockFactory {
             val: Val::Seq,
             domain: Domain::Desc,
             bytes: Some(Bytes::new(self.end, self.end + val_bytes_len)),
+            status: Status::Settled,
         });
 
         self.end += val_bytes_len;
@@ -85,6 +90,7 @@ impl BlockFactory {
             val: Val::Colon,
             domain: Domain::Colon,
             bytes: None,
+            status: Status::Missing,
         });
 
         self
@@ -96,6 +102,7 @@ impl BlockFactory {
             val: Val::Space,
             domain: Domain::Space,
             bytes: None,
+            status: Status::Missing,
         });
 
         self
@@ -107,6 +114,7 @@ impl BlockFactory {
             val: Val::Seq,
             domain: Domain::Desc,
             bytes: None,
+            status: Status::Missing,
         });
 
         self
@@ -118,6 +126,7 @@ impl BlockFactory {
             val: Val::Seq,
             domain: Domain::Type,
             bytes: None,
+            status: Status::Missing,
         });
 
         self

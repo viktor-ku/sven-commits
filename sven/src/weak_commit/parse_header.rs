@@ -1,7 +1,7 @@
 use super::{CRule, CommitParser};
 use crate::{
     additive::Additive,
-    block::{Block, Val},
+    block::{Block, Status, Val},
     bytes::Bytes,
     domain::Domain,
 };
@@ -10,12 +10,16 @@ use pest::Parser;
 
 pub fn parse_header(header: &str) -> Result<Vec<Block>> {
     let mut word_bytes = 0;
-    let mut id = Additive { step: 1_000, val: 0 };
+    let mut id = Additive {
+        step: 1_000,
+        val: 0,
+    };
     let mut v = vec![Block {
         id: Some(id.stamp()),
         val: Val::Root,
         domain: Domain::Root,
         bytes: None,
+        status: Status::Settled,
     }];
 
     let rules = CommitParser::parse(CRule::Tokens, header)?;
@@ -45,6 +49,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                                         span.end() - 1,
                                     )),
                                     domain: Domain::None,
+                                    status: Status::Unsigned,
                                 });
                                 word_bytes = 0;
                             }
@@ -58,6 +63,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                                 val: Val::OpenBracket,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
+                                status: Status::Unsigned,
                             });
                         }
                         CRule::TokenCloseBracket => {
@@ -66,6 +72,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                                 val: Val::CloseBracket,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
+                                status: Status::Unsigned,
                             });
                         }
                         CRule::TokenExclMark => {
@@ -74,6 +81,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                                 val: Val::ExclMark,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
+                                status: Status::Unsigned,
                             });
                         }
                         CRule::TokenColon => {
@@ -82,6 +90,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                                 val: Val::Colon,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
+                                status: Status::Unsigned,
                             });
                         }
                         CRule::TokenWhitespace => {
@@ -90,6 +99,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                                 val: Val::Space,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
+                                status: Status::Unsigned,
                             });
                         }
                         CRule::TokenEOL => {
@@ -98,6 +108,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
                                 val: Val::EOL,
                                 domain: Domain::None,
                                 bytes: Some(span.into()),
+                                status: Status::Unsigned,
                             });
                         }
                         _ => {}
@@ -114,6 +125,7 @@ pub fn parse_header(header: &str) -> Result<Vec<Block>> {
             val: Val::Seq,
             domain: Domain::None,
             bytes: Some(Bytes::new(prev, prev + word_bytes)),
+            status: Status::Unsigned,
         });
     }
 
@@ -144,6 +156,7 @@ mod rows {
                 val: Val::EOL,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 1)),
+                status: Status::Unsigned,
             },
         ];
         assert_eq!(actual, expected);
@@ -160,6 +173,7 @@ mod rows {
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
+                status: Status::Unsigned,
             },
         ];
         assert_eq!(actual, expected);
@@ -176,12 +190,14 @@ mod rows {
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(2_000),
                 val: Val::EOL,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
+                status: Status::Unsigned,
             },
         ];
         assert_eq!(actual, expected);
@@ -198,30 +214,35 @@ mod rows {
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 4)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(2_000),
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(4, 5)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(3_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(5, 9)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(4_000),
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(9, 10)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(5_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(10, 14)),
+                status: Status::Unsigned,
             },
         ];
         assert_eq!(actual, expected);
@@ -238,48 +259,56 @@ mod rows {
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(2_000),
                 val: Val::OpenBracket,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(3_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(4, 7)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(4_000),
                 val: Val::CloseBracket,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(7, 8)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(5_000),
                 val: Val::ExclMark,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(8, 9)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(6_000),
                 val: Val::Colon,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(9, 10)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(7_000),
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(10, 11)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(8_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(11, 13)),
+                status: Status::Unsigned,
             },
         ];
         assert_eq!(actual, expected);
@@ -296,24 +325,28 @@ mod rows {
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(2_000),
                 val: Val::Colon,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(3_000),
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(4, 5)),
+                status: Status::Unsigned,
             },
             Block {
                 id: Some(4_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(5, 9)),
+                status: Status::Unsigned,
             },
         ];
         assert_eq!(actual, expected);

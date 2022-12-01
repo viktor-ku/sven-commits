@@ -1,6 +1,6 @@
 use crate::{
     additive::Additive,
-    block::{Block, Val},
+    block::{Block, Status, Val},
     bytes::Bytes,
     domain::Domain,
     paper::Paper,
@@ -17,6 +17,7 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
                     paper.kind.found_at = block.id;
                     paper.kind.missing = false;
                     block.domain = Domain::Type;
+                    block.status = Status::Settled;
                     desc_start_i = i + 1;
                 }
             }
@@ -25,6 +26,7 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
                     paper.colon.found_at = block.id;
                     paper.colon.missing = false;
                     block.domain = Domain::Colon;
+                    block.status = Status::Settled;
                     desc_start_i = i + 1;
                 }
             }
@@ -32,6 +34,7 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
                 if paper.space.is_missing() {
                     paper.space.found_at = block.id;
                     paper.space.missing = false;
+                    block.status = Status::Settled;
                     block.domain = Domain::Space;
                     desc_start_i = i + 1;
                 }
@@ -52,6 +55,7 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
                         first.bytes.unwrap().start(),
                         last.bytes.unwrap().end(),
                     )),
+                    status: Status::Settled,
                 };
                 paper.desc.found_at = first.id;
                 paper.desc.missing = false;
@@ -70,6 +74,7 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
             val: Val::Seq,
             domain: Domain::Type,
             bytes: None,
+            status: Status::Missing,
         });
     }
     if paper.colon.is_missing() {
@@ -78,6 +83,7 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
             val: Val::Colon,
             domain: Domain::Colon,
             bytes: None,
+            status: Status::Missing,
         });
     }
     if paper.space.is_missing() {
@@ -86,6 +92,7 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
             val: Val::Space,
             domain: Domain::Space,
             bytes: None,
+            status: Status::Missing,
         });
     }
     if paper.desc.is_missing() {
@@ -94,6 +101,7 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
             val: Val::Seq,
             domain: Domain::Desc,
             bytes: None,
+            status: Status::Missing,
         });
     }
 
@@ -178,7 +186,10 @@ mod tests {
 
             let f = {
                 let mut f = BlockFactory::new();
-                f.kind(1_000, "type").colon(2_000).space(3_000).desc_missing(3_500);
+                f.kind(1_000, "type")
+                    .colon(2_000)
+                    .space(3_000)
+                    .desc_missing(3_500);
                 f
             };
 
