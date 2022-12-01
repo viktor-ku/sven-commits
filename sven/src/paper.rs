@@ -120,7 +120,7 @@ impl Paper {
 
                 let nth = pencil.missing_nth;
                 let base_id = pencil.found_at.unwrap();
-                let add = 1024 / total * (nth - 1);
+                let add = 1_000 / total * (nth - 1);
                 pencil.found_at = Some(base_id + add);
                 pencil.missing_total = total;
             } else {

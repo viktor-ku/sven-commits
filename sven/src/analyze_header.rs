@@ -107,7 +107,6 @@ pub fn analyze_header(blocks: &mut Vec<Block>) {
 mod tests {
     use super::*;
     use crate::{block_factory::BlockFactory, weak_commit::WeakCommit};
-    use pretty_assertions::assert_eq;
 
     #[inline]
     fn with_commit(commit: &str) -> Vec<Block> {
@@ -128,10 +127,10 @@ mod tests {
 
             let f = {
                 let mut f = BlockFactory::new();
-                f.kind_missing(0, 204)
-                    .colon_missing(0, 408)
-                    .space_missing(0, 612)
-                    .desc_missing(0, 816);
+                f.kind_missing(200)
+                    .colon_missing(400)
+                    .space_missing(600)
+                    .desc_missing(800);
                 f
             };
 
@@ -145,10 +144,10 @@ mod tests {
 
             let f = {
                 let mut f = BlockFactory::new();
-                f.kind_missing(0, 512)
-                    .colon(1)
-                    .space(2)
-                    .desc_missing(2, 512);
+                f.kind_missing(500)
+                    .colon(1_000)
+                    .space(2_000)
+                    .desc_missing(2_500);
                 f
             };
 
@@ -162,10 +161,10 @@ mod tests {
 
             let f = {
                 let mut f = BlockFactory::new();
-                f.kind(1, "type")
-                    .colon(2)
-                    .space_missing(2, 512)
-                    .desc(3, "desc");
+                f.kind(1_000, "type")
+                    .colon(2_000)
+                    .space_missing(2_500)
+                    .desc(3_000, "desc");
                 f
             };
 
@@ -179,7 +178,7 @@ mod tests {
 
             let f = {
                 let mut f = BlockFactory::new();
-                f.kind(1, "type").colon(2).space(3).desc_missing(3, 512);
+                f.kind(1_000, "type").colon(2_000).space(3_000).desc_missing(3_500);
                 f
             };
 
@@ -193,10 +192,10 @@ mod tests {
 
             let f = {
                 let mut f = BlockFactory::new();
-                f.kind(1, "fix")
-                    .colon_missing(1, 512)
-                    .space(2)
-                    .desc(3, "me");
+                f.kind(1_000, "fix")
+                    .colon_missing(1_500)
+                    .space(2_000)
+                    .desc(3_000, "me");
                 f
             };
 

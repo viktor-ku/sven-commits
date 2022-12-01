@@ -1,7 +1,7 @@
 use crate::{bytes::Bytes, domain::Domain};
 use std::fmt::Debug;
 
-#[derive(Debug, PartialEq, Eq, Clone)]
+#[derive(Debug, PartialEq, Eq, Clone, Default)]
 pub struct Block {
     pub id: Option<usize>,
     pub val: Val,
@@ -53,5 +53,11 @@ impl Ord for Block {
             (Some(me_id), Some(other_id)) => me_id.cmp(&other_id),
             _ => self.domain.cmp(&other.domain),
         }
+    }
+}
+
+impl Default for Val {
+    fn default() -> Self {
+        Self::None
     }
 }

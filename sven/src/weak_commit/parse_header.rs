@@ -10,7 +10,7 @@ use pest::Parser;
 
 pub fn parse_header(header: &str) -> Result<Vec<Block>> {
     let mut word_bytes = 0;
-    let mut id = Additive { step: 1024, val: 0 };
+    let mut id = Additive { step: 1_000, val: 0 };
     let mut v = vec![Block {
         id: Some(id.stamp()),
         val: Val::Root,
@@ -140,7 +140,7 @@ mod rows {
         let expected = vec![
             Block::root(),
             Block {
-                id: Some(1024),
+                id: Some(1_000),
                 val: Val::EOL,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 1)),
@@ -156,7 +156,7 @@ mod rows {
         let expected = vec![
             Block::root(),
             Block {
-                id: Some(1024),
+                id: Some(1_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
@@ -172,13 +172,13 @@ mod rows {
         let expected = vec![
             Block::root(),
             Block {
-                id: Some(1024),
+                id: Some(1_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
             Block {
-                id: Some(1024 * 2),
+                id: Some(2_000),
                 val: Val::EOL,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
@@ -194,31 +194,31 @@ mod rows {
         let expected = vec![
             Block::root(),
             Block {
-                id: Some(1024),
+                id: Some(1_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 4)),
             },
             Block {
-                id: Some(1024 * 2),
+                id: Some(2_000),
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(4, 5)),
             },
             Block {
-                id: Some(1024 * 3),
+                id: Some(3_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(5, 9)),
             },
             Block {
-                id: Some(1024 * 4),
+                id: Some(4_000),
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(9, 10)),
             },
             Block {
-                id: Some(1024 * 5),
+                id: Some(5_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(10, 14)),
@@ -234,49 +234,49 @@ mod rows {
         let expected = vec![
             Block::root(),
             Block {
-                id: Some(1024),
+                id: Some(1_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
             Block {
-                id: Some(1024 * 2),
+                id: Some(2_000),
                 val: Val::OpenBracket,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
             },
             Block {
-                id: Some(1024 * 3),
+                id: Some(3_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(4, 7)),
             },
             Block {
-                id: Some(1024 * 4),
+                id: Some(4_000),
                 val: Val::CloseBracket,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(7, 8)),
             },
             Block {
-                id: Some(1024 * 5),
+                id: Some(5_000),
                 val: Val::ExclMark,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(8, 9)),
             },
             Block {
-                id: Some(1024 * 6),
+                id: Some(6_000),
                 val: Val::Colon,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(9, 10)),
             },
             Block {
-                id: Some(1024 * 7),
+                id: Some(7_000),
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(10, 11)),
             },
             Block {
-                id: Some(1024 * 8),
+                id: Some(8_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(11, 13)),
@@ -292,25 +292,25 @@ mod rows {
         let expected = vec![
             Block::root(),
             Block {
-                id: Some(1024),
+                id: Some(1_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(0, 3)),
             },
             Block {
-                id: Some(1024 * 2),
+                id: Some(2_000),
                 val: Val::Colon,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(3, 4)),
             },
             Block {
-                id: Some(1024 * 3),
+                id: Some(3_000),
                 val: Val::Space,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(4, 5)),
             },
             Block {
-                id: Some(1024 * 4),
+                id: Some(4_000),
                 val: Val::Seq,
                 domain: Domain::None,
                 bytes: Some(Bytes::new(5, 9)),
