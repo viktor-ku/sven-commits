@@ -92,6 +92,17 @@ impl BlockFactory {
         self
     }
 
+    pub fn space_missing(&mut self, base: usize, add: usize) -> &mut Self {
+        self.blocks.push(Block {
+            id: Some(base * 1024 + add),
+            val: Val::Space,
+            domain: Domain::Space,
+            bytes: None,
+        });
+
+        self
+    }
+
     pub fn desc_missing(&mut self, base: usize, add: usize) -> &mut Self {
         self.blocks.push(Block {
             id: Some(base * 1024 + add),

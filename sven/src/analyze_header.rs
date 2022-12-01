@@ -115,6 +115,23 @@ mod tests {
         use pretty_assertions::assert_eq;
 
         #[test]
+        fn space() {
+            let commit = "type:desc";
+            let actual = with_commit(commit);
+
+            let f = {
+                let mut f = BlockFactory::new();
+                f.kind(1, "type")
+                    .colon(2)
+                    .space_missing(2, 512)
+                    .desc(3, "desc");
+                f
+            };
+
+            assert_eq!(f.blocks, actual);
+        }
+
+        #[test]
         fn desc() {
             let commit = "type: ";
             let actual = with_commit(commit);
