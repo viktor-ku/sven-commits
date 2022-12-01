@@ -115,13 +115,33 @@ mod tests {
         use pretty_assertions::assert_eq;
 
         #[test]
+        fn desc() {
+            let commit = "type: ";
+            let actual = with_commit(commit);
+
+            let f = {
+                let mut f = BlockFactory::new();
+                f.kind(1, "type")
+                    .colon(2)
+                    .space(3)
+                    .desc_missing(3, 512);
+                f
+            };
+
+            assert_eq!(f.blocks, actual);
+        }
+
+        #[test]
         fn colon() {
             let commit = "fix me";
             let actual = with_commit(commit);
 
             let f = {
                 let mut f = BlockFactory::new();
-                f.kind(1, "fix").missing_colon(512).space(2).desc(3, "me");
+                f.kind(1, "fix")
+                    .colon_missing(1, 512)
+                    .space(2)
+                    .desc(3, "me");
                 f
             };
 

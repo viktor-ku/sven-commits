@@ -6,7 +6,6 @@ use crate::{
 
 #[derive(Debug, Clone)]
 pub struct BlockFactory {
-    id: usize,
     pub blocks: Vec<Block>,
     end: usize,
 }
@@ -16,7 +15,6 @@ impl BlockFactory {
 
     pub fn new() -> Self {
         Self {
-            id: 0,
             end: 0,
             blocks: vec![Block {
                 id: Some(0),
@@ -27,17 +25,11 @@ impl BlockFactory {
         }
     }
 
-    #[inline]
-    pub fn next_id(&mut self, mul: usize) {
-        self.id = Self::C_STEP * mul;
-    }
-
-    pub fn kind(&mut self, add_mul: usize, val: &str) -> &mut Self {
+    pub fn kind(&mut self, mul: usize, val: &str) -> &mut Self {
         let val_bytes_len = val.as_bytes().len();
-        self.next_id(add_mul);
 
         self.blocks.push(Block {
-            id: Some(self.id),
+            id: Some(Self::C_STEP * mul),
             val: Val::Seq,
             domain: Domain::Type,
             bytes: Some(Bytes::new(self.end, self.end + val_bytes_len)),
@@ -47,13 +39,26 @@ impl BlockFactory {
         self
     }
 
-    pub fn space(&mut self, add_mul: usize) -> &mut Self {
+    pub fn colon(&mut self, mul: usize) -> &mut Self {
         let bytes = Bytes::single(self.end);
         self.end = bytes.end();
-        self.next_id(add_mul);
 
         self.blocks.push(Block {
-            id: Some(self.id),
+            id: Some(Self::C_STEP * mul),
+            val: Val::Colon,
+            domain: Domain::Colon,
+            bytes: Some(bytes),
+        });
+
+        self
+    }
+
+    pub fn space(&mut self, mul: usize) -> &mut Self {
+        let bytes = Bytes::single(self.end);
+        self.end = bytes.end();
+
+        self.blocks.push(Block {
+            id: Some(Self::C_STEP * mul),
             val: Val::Space,
             domain: Domain::Space,
             bytes: Some(bytes),
@@ -62,12 +67,11 @@ impl BlockFactory {
         self
     }
 
-    pub fn desc(&mut self, add_mul: usize, val: &str) -> &mut Self {
+    pub fn desc(&mut self, mul: usize, val: &str) -> &mut Self {
         let val_bytes_len = val.as_bytes().len();
-        self.next_id(add_mul);
 
         self.blocks.push(Block {
-            id: Some(self.id),
+            id: Some(Self::C_STEP * mul),
             val: Val::Seq,
             domain: Domain::Desc,
             bytes: Some(Bytes::new(self.end, self.end + val_bytes_len)),
@@ -77,13 +81,22 @@ impl BlockFactory {
         self
     }
 
-    pub fn missing_colon(&mut self, add: usize) -> &mut Self {
-        self.id += add;
-
+    pub fn colon_missing(&mut self, base: usize, add: usize) -> &mut Self {
         self.blocks.push(Block {
-            id: Some(self.id),
+            id: Some(base * 1024 + add),
             val: Val::Colon,
             domain: Domain::Colon,
+            bytes: None,
+        });
+
+        self
+    }
+
+    pub fn desc_missing(&mut self, base: usize, add: usize) -> &mut Self {
+        self.blocks.push(Block {
+            id: Some(base * 1024 + add),
+            val: Val::Seq,
+            domain: Domain::Desc,
             bytes: None,
         });
 
