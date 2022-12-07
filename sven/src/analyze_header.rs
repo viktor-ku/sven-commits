@@ -129,6 +129,46 @@ mod tests {
         use pretty_assertions::assert_eq;
 
         #[test]
+        fn scope_val() {
+            let commit = "fix(): me";
+            let actual = with_commit(commit);
+
+            let f = {
+                let mut f = BlockFactory::new();
+                f.kind(1_000, "fix")
+                    .scope_ob(2_000)
+                    .scope_val_missing(2_500)
+                    .scope_cb(3_000)
+                    .colon(4_000)
+                    .space(5_000)
+                    .desc(6_000, "me");
+                f
+            };
+
+            assert_eq!(f.blocks, actual);
+        }
+
+        #[test]
+        fn scope_cb() {
+            let commit = "fix(scope: me";
+            let actual = with_commit(commit);
+
+            let f = {
+                let mut f = BlockFactory::new();
+                f.kind(1_000, "fix")
+                    .scope_ob(2_000)
+                    .scope_val(3_000, "scope")
+                    .scope_cb(3_500)
+                    .colon(4_000)
+                    .space(5_000)
+                    .desc(6_000, "me");
+                f
+            };
+
+            assert_eq!(f.blocks, actual);
+        }
+
+        #[test]
         fn all() {
             let commit = "";
             let actual = with_commit(commit);
