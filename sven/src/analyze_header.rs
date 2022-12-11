@@ -7,108 +7,7 @@ use crate::{
 };
 
 pub fn analyze_header(blocks: &mut Vec<Block>) {
-    let mut paper = Paper::new();
-    let mut desc_start_i = 1;
-
-    for (i, block) in blocks.iter_mut().enumerate() {
-        match block.val {
-            Val::Seq => {
-                if paper.kind.is_missing() {
-                    paper.kind.found_at = block.id;
-                    paper.kind.missing = false;
-                    block.domain = Domain::Type;
-                    block.status = Status::Settled;
-                    desc_start_i = i + 1;
-                }
-            }
-            Val::Colon => {
-                if paper.colon.is_missing() {
-                    paper.colon.found_at = block.id;
-                    paper.colon.missing = false;
-                    block.domain = Domain::Colon;
-                    block.status = Status::Settled;
-                    desc_start_i = i + 1;
-                }
-            }
-            Val::Space => {
-                if paper.space.is_missing() {
-                    paper.space.found_at = block.id;
-                    paper.space.missing = false;
-                    block.status = Status::Settled;
-                    block.domain = Domain::Space;
-                    desc_start_i = i + 1;
-                }
-            }
-            _ => {}
-        }
-    }
-
-    match blocks.get_mut(desc_start_i..) {
-        Some(desc) => {
-            if !desc.is_empty() {
-                let (first, last) = (desc.first().unwrap(), desc.last().unwrap());
-                let repackaged_desc = Block {
-                    id: first.id,
-                    val: Val::Seq,
-                    domain: Domain::Desc,
-                    bytes: Some(Bytes::new(
-                        first.bytes.unwrap().start(),
-                        last.bytes.unwrap().end(),
-                    )),
-                    status: Status::Settled,
-                };
-                paper.desc.found_at = first.id;
-                paper.desc.missing = false;
-                blocks.drain(desc_start_i..);
-                blocks.push(repackaged_desc);
-            }
-        }
-        None => {}
-    };
-
-    paper.build_map();
-
-    if paper.kind.is_missing() {
-        blocks.push(Block {
-            id: paper.kind.found_at,
-            val: Val::Seq,
-            domain: Domain::Type,
-            bytes: None,
-            status: Status::Missing,
-        });
-    }
-    if paper.colon.is_missing() {
-        blocks.push(Block {
-            id: paper.colon.found_at,
-            val: Val::Colon,
-            domain: Domain::Colon,
-            bytes: None,
-            status: Status::Missing,
-        });
-    }
-    if paper.space.is_missing() {
-        blocks.push(Block {
-            id: paper.space.found_at,
-            val: Val::Space,
-            domain: Domain::Space,
-            bytes: None,
-            status: Status::Missing,
-        });
-    }
-    if paper.desc.is_missing() {
-        blocks.push(Block {
-            id: paper.desc.found_at,
-            val: Val::Seq,
-            domain: Domain::Desc,
-            bytes: None,
-            status: Status::Missing,
-        });
-    }
-
-    blocks.sort();
-
-    println!("{:#?}", blocks);
-    println!("{:#?}", paper);
+    //
 }
 
 #[cfg(test)]
@@ -122,6 +21,57 @@ mod tests {
         let mut w = WeakCommit::parse(commit).unwrap();
         analyze_header(&mut w.header);
         w.header
+    }
+
+    mod general {
+        use super::*;
+        use pretty_assertions::assert_eq;
+
+        #[test]
+        fn a01() {
+            let commit = ": fix me";
+            let actual = with_commit(commit);
+
+            // 1. missing type
+            //      unless first other word closely matches our types (either specified in config
+            //          or inferred from git commit history)
+            //
+            // 2. misplaced type
+            //      unexpected space? (which comes after "fix")
+            //
+            // how to decide which one has priority or makes more sense?
+            //
+            // in this case we choose (2) because fix actually mathces our config
+            // otherwise we would have choosen (1) because it's less steps for fixing
+
+            assert_eq!(1, 2);
+        }
+
+        #[test]
+        fn a02() {
+            let commit = " :fix me";
+            let actual = with_commit(commit);
+
+            // 1. missing type
+            //      missing colon
+            //          unexpected colon
+            //      misplaced colon
+            //
+            // * no unexpected space after misplaced colon path because we have
+            //      "fix" come right after the ":" (portal source)
+
+            // 2. misplaced type
+            //      missing colon
+            //          unexpected colon
+            //      misplaced colon
+            //
+            //      + space
+            //      ? colon
+            //      & type
+            //      ? space
+
+            assert_eq!(1, 2);
+        }
     }
 
     mod missing {
