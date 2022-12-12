@@ -13,7 +13,7 @@ pub fn analyze(commit: &str) -> Result<Report> {
     let config = Config {
         known_type: KnownType::AnyFirstSeq,
     };
-    analyze_header(commit, config, weak_commit.header);
+    analyze_header(commit, &config, weak_commit.header);
 
     Ok(Report {
         header: Vec::new(),

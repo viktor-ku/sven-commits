@@ -1,7 +1,10 @@
-use crate::{bytes::Bytes, domain::Domain};
+use crate::{
+    bytes::Bytes,
+    domain::{Domain, Scope},
+};
 use std::fmt::Debug;
 
-#[derive(Debug, PartialEq, Eq, Clone, Default)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct Block {
     pub id: Option<usize>,
     pub val: Val,
@@ -31,10 +34,10 @@ pub enum Status {
     /// users that something in their input was not expected
     Extra,
 
-    /// Used to mark a jump to (a destination) from a misplaced block. When showing final
-    /// result to users, we should emphasise such portals as expected places for referred
-    /// blocks
-    Portal,
+    /// Used to mark a jump to (a destination, marked by the index, or None if no such destination
+    /// has yet been found) from a misplaced block. When showing final result to users, we should
+    /// emphasise such portals as expected places for referred blocks
+    Portal(Option<usize>),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
@@ -72,6 +75,22 @@ impl PartialOrd for Block {
     #[inline]
     fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
         Some(self.cmp(&other))
+    }
+}
+
+impl Into<Domain> for Val {
+    fn into(self) -> Domain {
+        match self {
+            Val::Root => Domain::Root,
+            Val::Seq => Domain::Type,
+            Val::Colon => Domain::Colon,
+            Val::Space => Domain::Space,
+            Val::None => Domain::None,
+            Val::OpenBracket => Domain::Scope(Scope::OpenBracket),
+            Val::CloseBracket => Domain::Scope(Scope::CloseBracket),
+            Val::ExclMark => Domain::Breaking,
+            Val::EOL => Domain::None,
+        }
     }
 }
 
