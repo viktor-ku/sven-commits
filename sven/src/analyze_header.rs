@@ -124,8 +124,8 @@ fn find_possible_solutions(
                     if block.val == Val::Space {
                         q.next();
                     } else {
-                        try_missing!(i, Val::Colon);
-                        try_misplaced!(i, Val::Colon);
+                        try_missing!(i, Val::Space);
+                        try_misplaced!(i, Val::Space);
                         return;
                     }
                 }
