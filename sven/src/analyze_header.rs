@@ -156,8 +156,8 @@ fn is_type(expected_type: &KnownType, actual_block: &Block, commit: &str) -> boo
             Val::Seq => true,
             _ => false,
         },
-        KnownType::Set(set) => match (actual_block.status, actual_block.val) {
-            (Status::Missing, Val::Seq) => true,
+        KnownType::Set(set) => match (actual_block.domain, actual_block.val) {
+            (Domain::Type, _) => true,
             (_, Val::Seq) => match actual_block.capture(commit) {
                 Some(val) => set.get(val).is_some(),
                 None => false,
