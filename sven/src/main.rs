@@ -14,6 +14,7 @@ mod footer_issue;
 mod paper;
 mod pencil;
 mod report;
+mod config;
 mod weak_commit;
 
 use analyze::analyze;
