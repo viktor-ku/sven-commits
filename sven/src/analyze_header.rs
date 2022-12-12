@@ -37,11 +37,17 @@ fn find_possible_solutions(
     possible_solutions: &mut Vec<Vec<Block>>,
     open_portals: HashMap<usize, Block>,
 ) {
-    let mut q = VecDeque::from_iter([Domain::Type, Domain::Colon, Domain::Space]);
-    let mut blocks_iter = possible_solution.iter().enumerate();
+    let q = vec![Domain::Type, Domain::Colon, Domain::Space, Domain::Desc];
+    let mut q = q.iter().peekable();
 
-    // skip root
-    blocks_iter.next();
+    let blocks_iter = {
+        let mut iter = possible_solution.iter().enumerate();
+
+        // skip root
+        iter.next();
+
+        iter
+    };
 
     macro_rules! try_missing {
         ($i:expr, $val:expr) => {
@@ -91,15 +97,14 @@ fn find_possible_solutions(
         };
     }
 
-    while !q.is_empty() {
-        let expected_domain = q.front().unwrap();
-        let block = blocks_iter.next();
+    for (i, block) in blocks_iter {
+        let q_domain = q.peek();
 
-        match block {
-            Some((i, block)) => match expected_domain {
+        match q_domain {
+            Some(&q_domain) => match q_domain {
                 Domain::Type => {
                     if is_type(&config.known_type, &block, commit) {
-                        q.pop_front();
+                        q.next();
                     } else {
                         try_missing!(i, Val::Seq);
                         try_misplaced!(i, Val::Seq);
@@ -108,7 +113,7 @@ fn find_possible_solutions(
                 }
                 Domain::Colon => {
                     if block.val == Val::Colon {
-                        q.pop_front();
+                        q.next();
                     } else {
                         try_missing!(i, Val::Colon);
                         try_misplaced!(i, Val::Colon);
@@ -117,21 +122,25 @@ fn find_possible_solutions(
                 }
                 Domain::Space => {
                     if block.val == Val::Space {
-                        q.pop_front();
+                        q.next();
                     } else {
                         try_missing!(i, Val::Colon);
                         try_misplaced!(i, Val::Colon);
                         return;
                     }
                 }
+                Domain::Desc => {
+                    break;
+                }
                 _ => todo!(),
             },
             None => {
-                // means we have more missing blocks we should add
                 todo!()
             }
         }
     }
+
+    // TODO: check if queue is not empty then we have some blocks missing still
 
     if !open_portals.is_empty() {
         return;
