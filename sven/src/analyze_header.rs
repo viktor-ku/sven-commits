@@ -156,7 +156,7 @@ fn is_type(expected_type: &KnownType, actual_block: &Block, commit: &str) -> boo
             Val::Seq => true,
             _ => false,
         },
-        KnownType::Set(set) => match (actual_block.domain, actual_block.val) {
+        KnownType::Strict(set) => match (actual_block.domain, actual_block.val) {
             (Domain::Type, _) => true,
             (_, Val::Seq) => match actual_block.capture(commit) {
                 Some(val) => set.get(val).is_some(),
@@ -206,7 +206,7 @@ mod tests {
     fn just_colon_is_missing_when_type_is_known() {
         let blocks = with_commit(
             &Config {
-                known_type: KnownType::Set(HashSet::from_iter(["fix".to_string()])),
+                known_type: KnownType::Strict(HashSet::from_iter(["fix".to_string()])),
             },
             "fix two three",
         );
@@ -227,7 +227,7 @@ mod tests {
     fn only_desc_found_when_could_not_find_type() {
         let blocks = with_commit(
             &Config {
-                known_type: KnownType::Set(HashSet::from_iter(["fix".to_string()])),
+                known_type: KnownType::Strict(HashSet::from_iter(["fix".to_string()])),
             },
             "one two three",
         );

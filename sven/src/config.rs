@@ -3,7 +3,10 @@ use std::collections::HashSet;
 #[derive(Debug)]
 pub enum KnownType {
     AnyFirstSeq,
-    Set(HashSet<String>),
+
+    /// Seq from the input is expected to strictly
+    /// match predefined config (PartialEq)
+    Strict(HashSet<String>),
 }
 
 #[derive(Debug)]
