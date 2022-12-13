@@ -1,7 +1,7 @@
 use std::collections::HashSet;
 
 #[derive(Debug)]
-pub enum KnownType {
+pub enum TypeRule {
     /// Match first Seq from the input
     AnyFirstSeq,
 
@@ -16,5 +16,5 @@ pub enum KnownType {
 
 #[derive(Debug)]
 pub struct Config {
-    pub known_type: KnownType,
+    pub type_rule: TypeRule,
 }

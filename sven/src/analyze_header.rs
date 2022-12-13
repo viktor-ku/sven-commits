@@ -2,7 +2,7 @@ use crate::{
     additive::Additive,
     block::{Block, Status, Val},
     bytes::Bytes,
-    config::{Config, KnownType},
+    config::{Config, TypeRule},
     domain::Domain,
     paper::Paper,
 };
@@ -103,7 +103,7 @@ fn find_possible_solutions(
         match q_domain {
             Some(&q_domain) => match q_domain {
                 Domain::Type => {
-                    if is_type(&config.known_type, &block, commit) {
+                    if is_type(&config.type_rule, &block, commit) {
                         q.next();
                     } else {
                         try_missing!(i, Val::Seq);
@@ -150,13 +150,13 @@ fn find_possible_solutions(
     possible_solutions.push(Vec::from_iter(possible_solution));
 }
 
-fn is_type(expected_type: &KnownType, actual_block: &Block, commit: &str) -> bool {
+fn is_type(expected_type: &TypeRule, actual_block: &Block, commit: &str) -> bool {
     match expected_type {
-        KnownType::AnyFirstSeq => match actual_block.val {
+        TypeRule::AnyFirstSeq => match actual_block.val {
             Val::Seq => true,
             _ => false,
         },
-        KnownType::Strict(set) => match (actual_block.domain, actual_block.val) {
+        TypeRule::Strict(set) => match (actual_block.domain, actual_block.val) {
             (Domain::Type, _) => true,
             (_, Val::Seq) => match actual_block.capture(commit) {
                 Some(val) => set.get(val).is_some(),
@@ -164,7 +164,7 @@ fn is_type(expected_type: &KnownType, actual_block: &Block, commit: &str) -> boo
             },
             _ => false,
         },
-        KnownType::Like(_) => todo!()
+        TypeRule::Like(_) => todo!(),
     }
 }
 
@@ -186,7 +186,7 @@ mod tests {
     fn just_colon_is_missing_when_type_is_first_seq() {
         let blocks = with_commit(
             &Config {
-                known_type: KnownType::AnyFirstSeq,
+                type_rule: TypeRule::AnyFirstSeq,
             },
             "one two three",
         );
@@ -207,7 +207,7 @@ mod tests {
     fn just_colon_is_missing_when_type_is_known() {
         let blocks = with_commit(
             &Config {
-                known_type: KnownType::Strict(HashSet::from_iter(["fix".to_string()])),
+                type_rule: TypeRule::Strict(HashSet::from_iter(["fix".to_string()])),
             },
             "fix two three",
         );
@@ -228,7 +228,7 @@ mod tests {
     fn only_desc_found_when_could_not_find_type() {
         let blocks = with_commit(
             &Config {
-                known_type: KnownType::Strict(HashSet::from_iter(["fix".to_string()])),
+                type_rule: TypeRule::Strict(HashSet::from_iter(["fix".to_string()])),
             },
             "one two three",
         );

@@ -1,6 +1,6 @@
 use crate::{
     analyze_header::analyze_header,
-    config::{Config, KnownType},
+    config::{Config, TypeRule},
     report::Report,
     weak_commit::WeakCommit,
 };
@@ -11,7 +11,7 @@ pub fn analyze(commit: &str) -> Result<Report> {
     let weak_commit = WeakCommit::parse(commit)?;
 
     let config = Config {
-        known_type: KnownType::AnyFirstSeq,
+        type_rule: TypeRule::AnyFirstSeq,
     };
     analyze_header(commit, &config, weak_commit.header);
 
