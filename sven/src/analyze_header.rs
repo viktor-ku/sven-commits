@@ -164,6 +164,7 @@ fn is_type(expected_type: &KnownType, actual_block: &Block, commit: &str) -> boo
             },
             _ => false,
         },
+        KnownType::Like(_) => todo!()
     }
 }
 
