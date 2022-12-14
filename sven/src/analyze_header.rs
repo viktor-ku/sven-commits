@@ -3,21 +3,14 @@ use crate::{
     config::{Config, TypeRule},
     domain::Domain,
 };
-use std::collections::{HashMap, VecDeque};
+use std::collections::HashMap;
 
 /// Analyse header blocks returning an optimal solution
 /// that fulfills the conventional commit specification
 pub fn analyze_header(commit: &str, config: &Config, blocks: Vec<Block>) -> Vec<Block> {
-    let initial_possible_solution = VecDeque::from_iter(blocks);
     let mut all_solutions = Vec::new();
 
-    find_possible_solutions(
-        commit,
-        config,
-        initial_possible_solution,
-        &mut all_solutions,
-        HashMap::new(),
-    );
+    find_possible_solutions(commit, config, blocks, &mut all_solutions, HashMap::new());
 
     println!("all solutions {:#?}", all_solutions);
 
@@ -30,26 +23,23 @@ pub fn analyze_header(commit: &str, config: &Config, blocks: Vec<Block>) -> Vec<
 fn find_possible_solutions(
     commit: &str,
     config: &Config,
-    possible_solution: VecDeque<Block>,
-    possible_solutions: &mut Vec<Vec<Block>>,
+    candidate: Vec<Block>,
+    solutions: &mut Vec<Vec<Block>>,
     open_portals: HashMap<usize, Block>,
 ) {
     let q = vec![Domain::Type, Domain::Colon, Domain::Space, Domain::Desc];
     let mut q = q.iter().peekable();
 
     let blocks_iter = {
-        let mut iter = possible_solution.iter().enumerate();
-
-        // skip root
-        iter.next();
-
+        let mut iter = candidate.iter().enumerate();
+        iter.next(); // skip root
         iter
     };
 
     macro_rules! try_missing {
         ($i:expr, $val:expr) => {
-            let mut alternative_solution = possible_solution.clone();
-            alternative_solution.insert(
+            let mut alternative = candidate.clone();
+            alternative.insert(
                 $i,
                 Block {
                     id: None,
@@ -59,13 +49,7 @@ fn find_possible_solutions(
                     status: Status::Missing,
                 },
             );
-            find_possible_solutions(
-                commit,
-                config,
-                alternative_solution,
-                possible_solutions,
-                open_portals.clone(),
-            );
+            find_possible_solutions(commit, config, alternative, solutions, open_portals.clone());
         };
     }
     macro_rules! try_misplaced {
@@ -78,19 +62,13 @@ fn find_possible_solutions(
                 status: Status::Portal(None),
             };
 
-            let mut alternative_solution = possible_solution.clone();
-            alternative_solution.insert($i, block);
+            let mut alternative = candidate.clone();
+            alternative.insert($i, block);
 
             let mut open_portals = open_portals.clone();
             open_portals.insert($i, block);
 
-            find_possible_solutions(
-                commit,
-                config,
-                alternative_solution,
-                possible_solutions,
-                open_portals,
-            );
+            find_possible_solutions(commit, config, alternative, solutions, open_portals);
         };
     }
 
@@ -144,7 +122,7 @@ fn find_possible_solutions(
     }
 
     // when we reach here, assume _a_ possible solution found
-    possible_solutions.push(Vec::from_iter(possible_solution));
+    solutions.push(candidate);
 }
 
 fn is_type(expected_type: &TypeRule, actual_block: &Block, commit: &str) -> bool {
