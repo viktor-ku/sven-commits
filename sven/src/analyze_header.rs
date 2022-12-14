@@ -5,12 +5,31 @@ use crate::{
 };
 use std::collections::HashMap;
 
+#[derive(Debug, Default)]
+pub struct Portal {
+    found_at: usize,
+    pointing_at: Option<usize>,
+}
+
+#[derive(Debug, Default)]
+pub struct Portals {
+    pub kind: Option<Portal>,
+    pub colon: Option<Portal>,
+    pub space: Option<Portal>,
+}
+
+impl Portals {
+    pub fn is_empty(&self) -> bool {
+        self.kind.is_none() && self.colon.is_none() && self.space.is_none()
+    }
+}
+
 /// Analyse header blocks returning an optimal solution
 /// that fulfills the conventional commit specification
 pub fn analyze_header(commit: &str, config: &Config, blocks: Vec<Block>) -> Vec<Block> {
     let mut all_solutions = Vec::new();
 
-    find_solutions(commit, config, blocks, &mut all_solutions, HashMap::new());
+    find_solutions(commit, config, blocks, &mut all_solutions);
 
     pick_solution(all_solutions)
 }
@@ -31,31 +50,33 @@ fn find_solutions(
     config: &Config,
     candidate: Vec<Block>,
     solutions: &mut Vec<Vec<Block>>,
-    open_portals: HashMap<usize, Block>,
 ) {
     let q = vec![Domain::Type, Domain::Colon, Domain::Space, Domain::Desc];
     let mut q = q.iter().peekable();
 
+    let mut portals = Portals::default();
+
+    let mut candidate = candidate;
     let blocks_iter = {
-        let mut iter = candidate.iter().enumerate();
+        let mut iter = candidate.iter_mut().enumerate();
         iter.next(); // skip root
         iter
     };
 
     macro_rules! try_missing {
         ($i:expr, $val:expr) => {
+            let block = Block {
+                id: None,
+                val: $val,
+                domain: $val.into(),
+                bytes: None,
+                status: Status::Missing,
+            };
+
             let mut alternative = candidate.clone();
-            alternative.insert(
-                $i,
-                Block {
-                    id: None,
-                    val: $val,
-                    domain: $val.into(),
-                    bytes: None,
-                    status: Status::Missing,
-                },
-            );
-            find_solutions(commit, config, alternative, solutions, open_portals.clone());
+            alternative.insert($i, block);
+
+            find_solutions(commit, config, alternative, solutions);
         };
     }
     macro_rules! try_misplaced {
@@ -71,21 +92,56 @@ fn find_solutions(
             let mut alternative = candidate.clone();
             alternative.insert($i, block);
 
-            let mut open_portals = open_portals.clone();
-            open_portals.insert($i, block);
-
-            find_solutions(commit, config, alternative, solutions, open_portals);
+            find_solutions(commit, config, alternative, solutions);
         };
     }
 
     for (i, block) in blocks_iter {
         let q_domain = q.peek();
 
+        match block.status {
+            Status::Portal(dest) => {
+                match dest {
+                    Some(_) => {
+                        // if we get here it means we already set destination
+                        // for the current portal? but when?
+                        todo!()
+                    }
+                    None => match block.domain {
+                        Domain::Type => {
+                            portals.kind = Some(Portal {
+                                found_at: i,
+                                pointing_at: None,
+                            });
+                        }
+                        Domain::Colon => {
+                            portals.colon = Some(Portal {
+                                found_at: i,
+                                pointing_at: None,
+                            });
+                        }
+                        Domain::Space => {
+                            portals.space = Some(Portal {
+                                found_at: i,
+                                pointing_at: None,
+                            });
+                        }
+                        _ => {}
+                    },
+                };
+            }
+            _ => {}
+        };
+
         match q_domain {
             Some(&q_domain) => match q_domain {
                 Domain::Type => {
                     if is_type(&config.type_rule, &block, commit) {
                         q.next();
+                        block.domain = Domain::Type;
+                        if block.status == Status::Unsigned {
+                            block.status = Status::Settled;
+                        }
                     } else {
                         try_missing!(i, Val::Seq);
                         try_misplaced!(i, Val::Seq);
@@ -95,6 +151,10 @@ fn find_solutions(
                 Domain::Colon => {
                     if block.val == Val::Colon {
                         q.next();
+                        block.domain = Domain::Colon;
+                        if block.status == Status::Unsigned {
+                            block.status = Status::Settled;
+                        }
                     } else {
                         try_missing!(i, Val::Colon);
                         try_misplaced!(i, Val::Colon);
@@ -104,6 +164,10 @@ fn find_solutions(
                 Domain::Space => {
                     if block.val == Val::Space {
                         q.next();
+                        block.domain = Domain::Space;
+                        if block.status == Status::Unsigned {
+                            block.status = Status::Settled;
+                        }
                     } else {
                         try_missing!(i, Val::Space);
                         try_misplaced!(i, Val::Space);
@@ -123,7 +187,7 @@ fn find_solutions(
 
     // TODO: check if queue is not empty then we have some blocks missing still
 
-    if !open_portals.is_empty() {
+    if !portals.is_empty() {
         return;
     }
 
