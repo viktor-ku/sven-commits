@@ -190,7 +190,12 @@ fn find_solutions(
                 if block.status == Status::Unsigned {
                     match &mut portals.colon {
                         Some(colon_portal) => {
-                            colon_portal.pointing_at = Some(i);
+                            if colon_portal.is_connected() {
+                                block.status = Status::Extra;
+                            } else {
+                                colon_portal.pointing_at = Some(i);
+                                block.status = Status::Settled;
+                            }
                         }
                         None => {
                             block.status = Status::Extra;
