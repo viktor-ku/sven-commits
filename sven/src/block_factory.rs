@@ -7,13 +7,15 @@ use crate::{
 #[derive(Debug, Clone)]
 pub struct BlockFactory {
     pub blocks: Vec<Block>,
-    end: usize,
+    pub end_byte: usize,
+    pub end_blocks: usize,
 }
 
 impl BlockFactory {
     pub fn new() -> Self {
         Self {
-            end: 0,
+            end_byte: 0,
+            end_blocks: 1,
             blocks: vec![Block {
                 id: Some(0),
                 val: Val::Root,
@@ -31,17 +33,18 @@ impl BlockFactory {
             id: Some(id),
             val: Val::Seq,
             domain: Domain::Type,
-            bytes: Some(Bytes::new(self.end, self.end + val_bytes_len)),
+            bytes: Some(Bytes::new(self.end_byte, self.end_byte + val_bytes_len)),
             status: Status::Settled,
         });
 
-        self.end += val_bytes_len;
+        self.end_byte += val_bytes_len;
+        self.end_blocks += 1;
         self
     }
 
     pub fn scope_ob(&mut self, id: usize) -> &mut Self {
-        let bytes = Bytes::single(self.end);
-        self.end = bytes.end();
+        let bytes = Bytes::single(self.end_byte);
+        self.end_byte = bytes.end();
 
         self.blocks.push(Block {
             id: Some(id),
@@ -51,6 +54,7 @@ impl BlockFactory {
             status: Status::Settled,
         });
 
+        self.end_blocks += 1;
         self
     }
 
@@ -61,17 +65,18 @@ impl BlockFactory {
             id: Some(id),
             val: Val::Seq,
             domain: Domain::Scope(Scope::Scope),
-            bytes: Some(Bytes::new(self.end, self.end + val_bytes_len)),
+            bytes: Some(Bytes::new(self.end_byte, self.end_byte + val_bytes_len)),
             status: Status::Settled,
         });
 
-        self.end += val_bytes_len;
+        self.end_byte += val_bytes_len;
+        self.end_blocks += 1;
         self
     }
 
     pub fn scope_cb(&mut self, id: usize) -> &mut Self {
-        let bytes = Bytes::single(self.end);
-        self.end = bytes.end();
+        let bytes = Bytes::single(self.end_byte);
+        self.end_byte = bytes.end();
 
         self.blocks.push(Block {
             id: Some(id),
@@ -81,12 +86,13 @@ impl BlockFactory {
             status: Status::Settled,
         });
 
+        self.end_blocks += 1;
         self
     }
 
     pub fn colon(&mut self, id: usize) -> &mut Self {
-        let bytes = Bytes::single(self.end);
-        self.end = bytes.end();
+        let bytes = Bytes::single(self.end_byte);
+        self.end_byte = bytes.end();
 
         self.blocks.push(Block {
             id: Some(id),
@@ -96,12 +102,13 @@ impl BlockFactory {
             status: Status::Settled,
         });
 
+        self.end_blocks += 1;
         self
     }
 
     pub fn space(&mut self, id: usize) -> &mut Self {
-        let bytes = Bytes::single(self.end);
-        self.end = bytes.end();
+        let bytes = Bytes::single(self.end_byte);
+        self.end_byte = bytes.end();
 
         self.blocks.push(Block {
             id: Some(id),
@@ -111,6 +118,7 @@ impl BlockFactory {
             status: Status::Settled,
         });
 
+        self.end_blocks += 1;
         self
     }
 
@@ -121,11 +129,12 @@ impl BlockFactory {
             id: Some(id),
             val: Val::Seq,
             domain: Domain::Desc,
-            bytes: Some(Bytes::new(self.end, self.end + val_bytes_len)),
+            bytes: Some(Bytes::new(self.end_byte, self.end_byte + val_bytes_len)),
             status: Status::Settled,
         });
 
-        self.end += val_bytes_len;
+        self.end_byte += val_bytes_len;
+        self.end_blocks += 1;
         self
     }
 
@@ -138,6 +147,7 @@ impl BlockFactory {
             status: Status::Missing,
         });
 
+        self.end_blocks += 1;
         self
     }
 
@@ -150,6 +160,7 @@ impl BlockFactory {
             status: Status::Missing,
         });
 
+        self.end_blocks += 1;
         self
     }
 
@@ -162,6 +173,7 @@ impl BlockFactory {
             status: Status::Missing,
         });
 
+        self.end_blocks += 1;
         self
     }
 
@@ -174,6 +186,7 @@ impl BlockFactory {
             status: Status::Missing,
         });
 
+        self.end_blocks += 1;
         self
     }
 
@@ -186,6 +199,7 @@ impl BlockFactory {
             status: Status::Missing,
         });
 
+        self.end_blocks += 1;
         self
     }
 
@@ -198,6 +212,7 @@ impl BlockFactory {
             status: Status::Missing,
         });
 
+        self.end_blocks += 1;
         self
     }
 
@@ -210,6 +225,7 @@ impl BlockFactory {
             status: Status::Missing,
         });
 
+        self.end_blocks += 1;
         self
     }
 }

@@ -10,24 +10,23 @@ use std::collections::HashMap;
 pub fn analyze_header(commit: &str, config: &Config, blocks: Vec<Block>) -> Vec<Block> {
     let mut all_solutions = Vec::new();
 
-    find_possible_solutions(commit, config, blocks, &mut all_solutions, HashMap::new());
+    find_solutions(commit, config, blocks, &mut all_solutions, HashMap::new());
 
-    println!("all solutions {:#?}", all_solutions);
+    pick_solution(all_solutions)
+}
 
-    // TODO: figure out which one is the best solution out of all solutions
-    // ...
-
-    if all_solutions.is_empty() {
+fn pick_solution(all: Vec<Vec<Block>>) -> Vec<Block> {
+    if all.is_empty() {
         Vec::new()
-    } else if all_solutions.len() == 1 {
-        let v = &all_solutions[0];
+    } else if all.len() == 1 {
+        let v = &all[0];
         v.clone()
     } else {
         todo!()
     }
 }
 
-fn find_possible_solutions(
+fn find_solutions(
     commit: &str,
     config: &Config,
     candidate: Vec<Block>,
@@ -56,7 +55,7 @@ fn find_possible_solutions(
                     status: Status::Missing,
                 },
             );
-            find_possible_solutions(commit, config, alternative, solutions, open_portals.clone());
+            find_solutions(commit, config, alternative, solutions, open_portals.clone());
         };
     }
     macro_rules! try_misplaced {
@@ -75,7 +74,7 @@ fn find_possible_solutions(
             let mut open_portals = open_portals.clone();
             open_portals.insert($i, block);
 
-            find_possible_solutions(commit, config, alternative, solutions, open_portals);
+            find_solutions(commit, config, alternative, solutions, open_portals);
         };
     }
 
@@ -175,14 +174,11 @@ mod tests {
 
         let f = {
             let mut f = BlockFactory::new();
-            f.kind(1_000, "one")
-                .colon_missing(1_500)
-                .space(2_000)
-                .desc(3_000, "two three");
+            f.kind(1_000, "one").colon_missing(1_500).space(2_000);
             f
         };
 
-        assert_eq!(f.blocks, blocks);
+        assert_eq!(f.blocks, blocks[..f.end_blocks]);
     }
 
     #[test]
@@ -196,14 +192,11 @@ mod tests {
 
         let f = {
             let mut f = BlockFactory::new();
-            f.kind(1_000, "fix")
-                .colon_missing(1_500)
-                .space(2_000)
-                .desc(3_000, "two three");
+            f.kind(1_000, "fix").colon_missing(1_500).space(2_000);
             f
         };
 
-        assert_eq!(f.blocks, blocks);
+        assert_eq!(f.blocks, blocks[..f.end_blocks]);
     }
 
     #[test]
@@ -217,13 +210,10 @@ mod tests {
 
         let f = {
             let mut f = BlockFactory::new();
-            f.kind_missing(250)
-                .colon_missing(500)
-                .space_missing(750)
-                .desc(1_000, "one two three");
+            f.kind_missing(250).colon_missing(500).space_missing(750);
             f
         };
 
-        assert_eq!(f.blocks, blocks);
+        assert_eq!(f.blocks, blocks[..f.end_blocks]);
     }
 }
