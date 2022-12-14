@@ -17,7 +17,6 @@ impl BlockFactory {
             end_byte: 0,
             end_blocks: 1,
             blocks: vec![Block {
-                id: Some(0),
                 val: Val::Root,
                 bytes: None,
                 domain: Domain::Root,
@@ -26,11 +25,10 @@ impl BlockFactory {
         }
     }
 
-    pub fn kind(&mut self, id: usize, val: &str) -> &mut Self {
+    pub fn kind(&mut self, val: &str) -> &mut Self {
         let val_bytes_len = val.as_bytes().len();
 
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Seq,
             domain: Domain::Type,
             bytes: Some(Bytes::new(self.end_byte, self.end_byte + val_bytes_len)),
@@ -42,12 +40,11 @@ impl BlockFactory {
         self
     }
 
-    pub fn scope_ob(&mut self, id: usize) -> &mut Self {
+    pub fn scope_ob(&mut self) -> &mut Self {
         let bytes = Bytes::single(self.end_byte);
         self.end_byte = bytes.end();
 
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::OpenBracket,
             domain: Domain::Scope(Scope::OpenBracket),
             bytes: Some(bytes),
@@ -58,11 +55,10 @@ impl BlockFactory {
         self
     }
 
-    pub fn scope_val(&mut self, id: usize, val: &str) -> &mut Self {
+    pub fn scope_val(&mut self, val: &str) -> &mut Self {
         let val_bytes_len = val.as_bytes().len();
 
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Seq,
             domain: Domain::Scope(Scope::Scope),
             bytes: Some(Bytes::new(self.end_byte, self.end_byte + val_bytes_len)),
@@ -74,12 +70,11 @@ impl BlockFactory {
         self
     }
 
-    pub fn scope_cb(&mut self, id: usize) -> &mut Self {
+    pub fn scope_cb(&mut self) -> &mut Self {
         let bytes = Bytes::single(self.end_byte);
         self.end_byte = bytes.end();
 
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::CloseBracket,
             domain: Domain::Scope(Scope::CloseBracket),
             bytes: Some(bytes),
@@ -90,12 +85,11 @@ impl BlockFactory {
         self
     }
 
-    pub fn colon(&mut self, id: usize) -> &mut Self {
+    pub fn colon(&mut self) -> &mut Self {
         let bytes = Bytes::single(self.end_byte);
         self.end_byte = bytes.end();
 
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Colon,
             domain: Domain::Colon,
             bytes: Some(bytes),
@@ -106,12 +100,11 @@ impl BlockFactory {
         self
     }
 
-    pub fn space(&mut self, id: usize) -> &mut Self {
+    pub fn space(&mut self) -> &mut Self {
         let bytes = Bytes::single(self.end_byte);
         self.end_byte = bytes.end();
 
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Space,
             domain: Domain::Space,
             bytes: Some(bytes),
@@ -122,11 +115,10 @@ impl BlockFactory {
         self
     }
 
-    pub fn desc(&mut self, id: usize, val: &str) -> &mut Self {
+    pub fn desc(&mut self, val: &str) -> &mut Self {
         let val_bytes_len = val.as_bytes().len();
 
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Seq,
             domain: Domain::Desc,
             bytes: Some(Bytes::new(self.end_byte, self.end_byte + val_bytes_len)),
@@ -138,9 +130,8 @@ impl BlockFactory {
         self
     }
 
-    pub fn colon_missing(&mut self, id: usize) -> &mut Self {
+    pub fn colon_missing(&mut self) -> &mut Self {
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Colon,
             domain: Domain::Colon,
             bytes: None,
@@ -151,9 +142,8 @@ impl BlockFactory {
         self
     }
 
-    pub fn space_missing(&mut self, id: usize) -> &mut Self {
+    pub fn space_missing(&mut self) -> &mut Self {
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Space,
             domain: Domain::Space,
             bytes: None,
@@ -164,9 +154,8 @@ impl BlockFactory {
         self
     }
 
-    pub fn desc_missing(&mut self, id: usize) -> &mut Self {
+    pub fn desc_missing(&mut self) -> &mut Self {
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Seq,
             domain: Domain::Desc,
             bytes: None,
@@ -177,9 +166,8 @@ impl BlockFactory {
         self
     }
 
-    pub fn kind_missing(&mut self, id: usize) -> &mut Self {
+    pub fn kind_missing(&mut self) -> &mut Self {
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Seq,
             domain: Domain::Type,
             bytes: None,
@@ -190,9 +178,8 @@ impl BlockFactory {
         self
     }
 
-    pub fn scope_ob_missing(&mut self, id: usize) -> &mut Self {
+    pub fn scope_ob_missing(&mut self) -> &mut Self {
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::OpenBracket,
             domain: Domain::Scope(Scope::OpenBracket),
             bytes: None,
@@ -203,9 +190,8 @@ impl BlockFactory {
         self
     }
 
-    pub fn scope_val_missing(&mut self, id: usize) -> &mut Self {
+    pub fn scope_val_missing(&mut self) -> &mut Self {
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::Seq,
             domain: Domain::Scope(Scope::Scope),
             bytes: None,
@@ -216,9 +202,8 @@ impl BlockFactory {
         self
     }
 
-    pub fn scope_cb_missing(&mut self, id: usize) -> &mut Self {
+    pub fn scope_cb_missing(&mut self) -> &mut Self {
         self.blocks.push(Block {
-            id: Some(id),
             val: Val::CloseBracket,
             domain: Domain::Scope(Scope::CloseBracket),
             bytes: None,

@@ -3,7 +3,6 @@ use crate::{
     config::{Config, TypeRule},
     domain::Domain,
 };
-use std::collections::HashMap;
 
 #[derive(Debug, Default)]
 pub struct Portal {
@@ -66,7 +65,6 @@ fn find_solutions(
     macro_rules! try_missing {
         ($i:expr, $val:expr) => {
             let block = Block {
-                id: None,
                 val: $val,
                 domain: $val.into(),
                 bytes: None,
@@ -82,7 +80,6 @@ fn find_solutions(
     macro_rules! try_misplaced {
         ($i:expr, $val:expr) => {
             let block = Block {
-                id: None,
                 val: $val,
                 domain: $val.into(),
                 bytes: None,
@@ -238,7 +235,7 @@ mod tests {
 
         let f = {
             let mut f = BlockFactory::new();
-            f.kind(1_000, "one").colon_missing(1_500).space(2_000);
+            f.kind("one").colon_missing().space();
             f
         };
 
@@ -256,7 +253,7 @@ mod tests {
 
         let f = {
             let mut f = BlockFactory::new();
-            f.kind(1_000, "fix").colon_missing(1_500).space(2_000);
+            f.kind("fix").colon_missing().space();
             f
         };
 
@@ -274,7 +271,7 @@ mod tests {
 
         let f = {
             let mut f = BlockFactory::new();
-            f.kind_missing(250).colon_missing(500).space_missing(750);
+            f.kind_missing().colon_missing().space_missing();
             f
         };
 

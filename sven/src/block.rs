@@ -6,7 +6,6 @@ use std::fmt::Debug;
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy, Default)]
 pub struct Block {
-    pub id: Option<usize>,
     pub val: Val,
     pub domain: Domain,
     pub bytes: Option<Bytes>,
@@ -62,19 +61,11 @@ impl Block {
     #[inline]
     pub fn root() -> Self {
         Self {
-            id: Some(0),
             val: Val::Root,
             domain: Domain::Root,
             bytes: None,
             status: Status::Settled,
         }
-    }
-}
-
-impl PartialOrd for Block {
-    #[inline]
-    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
-        Some(self.cmp(&other))
     }
 }
 
@@ -90,16 +81,6 @@ impl Into<Domain> for Val {
             Val::CloseBracket => Domain::Scope(Scope::CloseBracket),
             Val::ExclMark => Domain::Breaking,
             Val::EOL => Domain::None,
-        }
-    }
-}
-
-impl Ord for Block {
-    #[inline]
-    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
-        match (self.id, other.id) {
-            (Some(me_id), Some(other_id)) => me_id.cmp(&other_id),
-            _ => self.domain.cmp(&other.domain),
         }
     }
 }
