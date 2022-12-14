@@ -17,7 +17,14 @@ pub fn analyze_header(commit: &str, config: &Config, blocks: Vec<Block>) -> Vec<
     // TODO: figure out which one is the best solution out of all solutions
     // ...
 
-    Vec::new()
+    if all_solutions.is_empty() {
+        Vec::new()
+    } else if all_solutions.len() == 1 {
+        let v = &all_solutions[0];
+        v.clone()
+    } else {
+        todo!()
+    }
 }
 
 fn find_possible_solutions(
