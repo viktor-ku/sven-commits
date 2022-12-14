@@ -6,8 +6,8 @@ use crate::{
 
 #[derive(Debug, Default)]
 pub struct Portal {
-    found_at: usize,
-    pointing_at: Option<usize>,
+    pub found_at: usize,
+    pub pointing_at: Option<usize>,
 }
 
 #[derive(Debug, Default)]
@@ -20,6 +20,12 @@ pub struct Portals {
 impl Portals {
     pub fn is_empty(&self) -> bool {
         self.kind.is_none() && self.colon.is_none() && self.space.is_none()
+    }
+}
+
+impl Portal {
+    pub fn is_connected(&self) -> bool {
+        self.pointing_at.is_some()
     }
 }
 
@@ -171,18 +177,37 @@ fn find_solutions(
                         return;
                     }
                 }
-                Domain::Desc => {
-                    break;
-                }
+                Domain::Desc => {}
                 _ => todo!(),
             },
             None => {
                 todo!()
             }
         }
+
+        match block.val {
+            Val::Colon => {
+                if block.status == Status::Unsigned {
+                    match &mut portals.colon {
+                        Some(colon_portal) => {
+                            colon_portal.pointing_at = Some(i);
+                        }
+                        None => {
+                            block.status = Status::Extra;
+                        }
+                    }
+                }
+            }
+            _ => {}
+        };
     }
 
-    // TODO: check if queue is not empty then we have some blocks missing still
+    if let Some(kind) = &portals.kind {
+        if kind.is_connected() {
+            candidate[kind.found_at].status = Status::Portal(Some(kind.pointing_at.unwrap()));
+            portals.kind = None;
+        }
+    }
 
     if !portals.is_empty() {
         return;
