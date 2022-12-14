@@ -12,7 +12,6 @@ mod conventional_commit;
 mod domain;
 mod footer_issue;
 mod paper;
-mod pencil;
 mod report;
 mod weak_commit;
 
