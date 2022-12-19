@@ -29,6 +29,24 @@ impl Portal {
     }
 }
 
+#[derive(Debug, PartialEq, Eq, Default)]
+pub struct Candidate {
+    pub weight: usize,
+    pub solution: Vec<Block>,
+}
+
+impl PartialOrd for Candidate {
+    fn partial_cmp(&self, other: &Self) -> Option<std::cmp::Ordering> {
+        self.weight.partial_cmp(&other.weight)
+    }
+}
+
+impl Ord for Candidate {
+    fn cmp(&self, other: &Self) -> std::cmp::Ordering {
+        self.weight.cmp(&other.weight)
+    }
+}
+
 /// Analyse header blocks returning an optimal solution
 /// that fulfills the conventional commit specification
 pub fn analyze_header(commit: &str, config: &Config, blocks: Vec<Block>) -> Vec<Block> {
@@ -39,14 +57,15 @@ pub fn analyze_header(commit: &str, config: &Config, blocks: Vec<Block>) -> Vec<
     pick_solution(all_solutions)
 }
 
-fn pick_solution(all: Vec<Vec<Block>>) -> Vec<Block> {
+fn pick_solution(all: Vec<Candidate>) -> Vec<Block> {
     if all.is_empty() {
         Vec::new()
     } else if all.len() == 1 {
-        let v = &all[0];
-        v.clone()
+        all[0].solution.clone()
     } else {
-        todo!()
+        let mut all = all;
+        all.sort();
+        all[0].solution.clone()
     }
 }
 
@@ -54,12 +73,13 @@ fn find_solutions(
     commit: &str,
     config: &Config,
     candidate: Vec<Block>,
-    solutions: &mut Vec<Vec<Block>>,
+    solutions: &mut Vec<Candidate>,
 ) {
     let q = vec![Domain::Type, Domain::Colon, Domain::Space, Domain::Desc];
     let mut q = q.iter().peekable();
 
     let mut portals = Portals::default();
+    let mut weight: usize = 0;
 
     let mut candidate = candidate;
     let blocks_iter = {
@@ -104,6 +124,7 @@ fn find_solutions(
 
         match block.status {
             Status::Portal(dest) => {
+                weight += 1;
                 match dest {
                     Some(_) => {
                         // if we get here it means we already set destination
@@ -132,6 +153,9 @@ fn find_solutions(
                         _ => {}
                     },
                 };
+            }
+            Status::Missing => {
+                weight += 1;
             }
             _ => {}
         };
@@ -192,13 +216,16 @@ fn find_solutions(
                         Some(colon_portal) => {
                             if colon_portal.is_connected() {
                                 block.status = Status::Extra;
+                                weight += 1;
                             } else {
                                 colon_portal.pointing_at = Some(i);
-                                block.status = Status::Settled;
+                                block.status = Status::Ref(colon_portal.found_at);
+                                block.domain = Domain::Colon;
                             }
                         }
                         None => {
                             block.status = Status::Extra;
+                            weight += 1;
                         }
                     }
                 }
@@ -213,13 +240,30 @@ fn find_solutions(
             portals.kind = None;
         }
     }
+    if let Some(colon) = &portals.colon {
+        if colon.is_connected() {
+            candidate[colon.found_at].status = Status::Portal(Some(colon.pointing_at.unwrap()));
+            portals.colon = None;
+        }
+    }
+    if let Some(space) = &portals.space {
+        if space.is_connected() {
+            candidate[space.found_at].status = Status::Portal(Some(space.pointing_at.unwrap()));
+            portals.colon = None;
+        }
+    }
+
+    println!("{:#?}", solutions);
 
     if !portals.is_empty() {
         return;
     }
 
     // when we reach here, assume _a_ possible solution found
-    solutions.push(candidate);
+    solutions.push(Candidate {
+        weight,
+        solution: candidate,
+    });
 }
 
 fn is_type(expected_type: &TypeRule, actual_block: &Block, commit: &str) -> bool {
@@ -252,6 +296,24 @@ mod tests {
         println!("commit {:?}", commit);
         let w = WeakCommit::parse(commit).unwrap();
         analyze_header(commit, &config, w.header)
+    }
+
+    #[test]
+    fn it_works() {
+        let blocks = with_commit(
+            &Config {
+                type_rule: TypeRule::Strict(HashSet::from_iter(["fix".to_string()])),
+            },
+            " :not me",
+        );
+
+        let f = {
+            let mut f = BlockFactory::new();
+            f.kind_missing().colon_misplaced().space().colon_ref();
+            f
+        };
+
+        assert_eq!(f.blocks, blocks[..f.end_blocks]);
     }
 
     #[test]

@@ -37,6 +37,11 @@ pub enum Status {
     /// has yet been found) from a misplaced block. When showing final result to users, we should
     /// emphasise such portals as expected places for referred blocks
     Portal(Option<usize>),
+
+    /// Like `Settled`, however "Ref" (stands for reference) indicates that this
+    /// is the source of a misplaced (Portal) node. When drawing the end result
+    /// we should start an arrow pointing to the right place from this block
+    Ref(usize),
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]

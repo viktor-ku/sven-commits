@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::{
     block::{Block, Status, Val},
     bytes::Bytes,
@@ -9,6 +11,7 @@ pub struct BlockFactory {
     pub blocks: Vec<Block>,
     pub end_byte: usize,
     pub end_blocks: usize,
+    pub portals: HashMap<Domain, usize>,
 }
 
 impl BlockFactory {
@@ -16,6 +19,7 @@ impl BlockFactory {
         Self {
             end_byte: 0,
             end_blocks: 1,
+            portals: HashMap::new(),
             blocks: vec![Block {
                 val: Val::Root,
                 bytes: None,
@@ -137,6 +141,43 @@ impl BlockFactory {
             bytes: None,
             status: Status::Missing,
         });
+
+        self.end_blocks += 1;
+        self
+    }
+
+    pub fn colon_misplaced(&mut self) -> &mut Self {
+        let block = Block {
+            val: Val::Colon,
+            domain: Domain::Colon,
+            bytes: None,
+            status: Status::Portal(None),
+        };
+
+        self.blocks.push(block);
+        let i = self.blocks.len() - 1;
+
+        self.portals.insert(block.domain, i);
+        self.end_blocks += 1;
+        self
+    }
+
+    pub fn colon_ref(&mut self) -> &mut Self {
+        let from_i = *self.portals.get(&Domain::Colon).unwrap();
+        let bytes = Bytes::single(self.end_byte);
+        self.end_byte = bytes.end();
+
+        let block = Block {
+            val: Val::Colon,
+            domain: Domain::Colon,
+            bytes: Some(bytes),
+            status: Status::Ref(from_i),
+        };
+
+        self.blocks.push(block);
+        let i = self.blocks.len() - 1;
+
+        self.blocks.get_mut(from_i).unwrap().status = Status::Portal(Some(i));
 
         self.end_blocks += 1;
         self
