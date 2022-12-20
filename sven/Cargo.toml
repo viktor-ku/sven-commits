@@ -4,8 +4,8 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-pest = "2.4.*"
-pest_derive = "2.4.*"
+pest = "2.5.*"
+pest_derive = "2.5.*"
 anyhow = "1.0.*"
 
 [dev-dependencies]
