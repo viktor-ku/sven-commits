@@ -195,6 +195,18 @@ impl BlockFactory {
         self
     }
 
+    pub fn space_extra(&mut self) -> &mut Self {
+        self.blocks.push(Block {
+            val: Val::Space,
+            domain: Domain::Space,
+            bytes: None,
+            status: Status::Extra,
+        });
+
+        self.end_blocks += 1;
+        self
+    }
+
     pub fn desc_missing(&mut self) -> &mut Self {
         self.blocks.push(Block {
             val: Val::Seq,

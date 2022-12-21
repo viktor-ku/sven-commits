@@ -317,6 +317,24 @@ mod tests {
     }
 
     #[test]
+    fn it_works_2() {
+        let blocks = with_commit(
+            &Config {
+                type_rule: TypeRule::Strict(HashSet::from_iter(["fix".to_string()])),
+            },
+            " :fix me",
+        );
+
+        let f = {
+            let mut f = BlockFactory::new();
+            f.space_extra().colon_ref().kind("fix").colon_misplaced();
+            f
+        };
+
+        assert_eq!(f.blocks, blocks[..f.end_blocks]);
+    }
+
+    #[test]
     fn just_colon_is_missing_when_type_is_first_seq() {
         let blocks = with_commit(
             &Config {
