@@ -42,6 +42,10 @@ pub enum Status {
     /// is the source of a misplaced (Portal) node. When drawing the end result
     /// we should start an arrow pointing to the right place from this block
     Ref(usize),
+
+    /// A simple marker to show that we should be waiting for the block with this status
+    /// later
+    Promise,
 }
 
 #[derive(Debug, PartialEq, Eq, Clone, Copy)]
