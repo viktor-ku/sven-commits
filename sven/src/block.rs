@@ -33,15 +33,13 @@ pub enum Status {
     /// users that something in their input was not expected
     Extra,
 
-    /// Used to mark a jump to (a destination, marked by the index, or None if no such destination
-    /// has yet been found) from a misplaced block. When showing final result to users, we should
-    /// emphasise such portals as expected places for referred blocks
-    Portal(Option<usize>),
+    /// Indicates the misplaced block which should be moved to where the Portal block is located.
+    /// If Misplaced -> Portal connection is not fullfilled for even 1 pair then we consider this
+    /// solution to be useless.
+    Misplaced,
 
-    /// Like `Settled`, however "Ref" (stands for reference) indicates that this
-    /// is the source of a misplaced (Portal) node. When drawing the end result
-    /// we should start an arrow pointing to the right place from this block
-    Ref(usize),
+    /// Indicates the place where Misplaced block should be
+    Portal,
 
     /// A simple marker to show that we should be waiting for the block with this status
     /// later

@@ -109,7 +109,7 @@ fn find_solutions(
                 val: $val,
                 domain: $val.into(),
                 bytes: None,
-                status: Status::Portal(None),
+                status: Status::Misplaced,
             };
 
             let mut alternative = candidate.clone();
